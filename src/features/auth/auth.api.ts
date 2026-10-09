@@ -18,7 +18,7 @@ export async function getAuthAsync(): Promise<AuthState> {
 export async function signInAsync(email: string) {
     const {error} = await supabase.auth.signInWithOtp({
         email: email.trim(),
-        options: {emailRedirectTo: `${window.location.origin}/auth/callback`},
+        options: {emailRedirectTo: new URL(`${import.meta.env.BASE_URL}auth/callback`, window.location.origin).href},
     });
     if (error) throw error;
 }

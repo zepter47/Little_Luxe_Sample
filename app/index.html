@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Little Luxe</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      // Restore the original URL after GitHub Pages serves our 404 redirect.
+      const route = new URLSearchParams(location.search).get('__pages_route');
+      if (route && route.startsWith('/') && !route.startsWith('//')) {
+        history.replaceState(null, '', route + location.hash);
+      }
+    </script>
+    <script type="module" src="../src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,49 @@
+name: Build GitHub Pages
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature-branch]
+    paths:
+      - 'app/**'
+      - 'src/**'
+      - 'public/**'
+      - 'scripts/**'
+      - 'package*.json'
+      - '*config*'
+      - '.github/workflows/pages.yml'
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: pages-feature-branch
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature-branch
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run deploy:prepare
+      - name: Commit built site to Pages source
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html 404.html assets favicon.svg icons.svg .nojekyll
+          if ! git diff --cached --quiet; then
+            git commit -m 'Build GitHub Pages site'
+            git push origin HEAD:feature-branch
+          fi
+      - name: Request branch-based Pages rebuild
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST repos/${{ github.repository }}/pages/builds

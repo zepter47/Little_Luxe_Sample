@@ -1,0 +1,1 @@
+var e={all:[`auth`]},t={isAuthenticated:!1,userId:null,email:null,appRole:null};function n(e){return e.isAuthenticated&&(e.appRole===`staff`||e.appRole===`admin`)}export{e as n,n as r,t};

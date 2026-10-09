@@ -1,4 +1,32 @@
-# React + TypeScript + Vite
+# Little Luxe
+
+Published at https://zepter47.github.io/Little_Luxe_Sample/ using GitHub Pages,
+with `feature-branch` and `/ (root)` as the publishing source.
+
+## Development and deployment
+
+Run `npm ci`, then `npm run dev`. The editable HTML entry is `app/index.html`.
+The repository-root `index.html`, `assets/`, `404.html`, and SVG files are generated
+deployment output. Do not edit these generated files directly.
+
+`npm run deploy:prepare` builds the production app and copies it to the branch root.
+Commit and push the result to `feature-branch` to publish it. The Build GitHub Pages
+workflow also rebuilds when source files change, commits the output, and explicitly
+requests a Pages rebuild. It requires Actions to be allowed to write repository contents.
+
+`.env.pages` holds the public Supabase URL and browser publishable key. These values
+are included in the browser bundle; never put a Supabase secret or service-role key there.
+
+The router and assets use `/Little_Luxe_Sample/`. `404.html` redirects direct requests
+through the entry point, which restores their path, query string, and fragment before
+the app starts. This supports refreshes, nested routes, and email sign-in callbacks.
+
+In Supabase Authentication → URL Configuration, use
+`https://zepter47.github.io/Little_Luxe_Sample/` as the Site URL and allow
+`https://zepter47.github.io/Little_Luxe_Sample/auth/callback` as a Redirect URL.
+Keep any localhost redirect URLs needed for development.
+
+## Original template notes
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

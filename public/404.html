@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Loading Little Luxe</title>
+    <script>
+      const base = '/Little_Luxe_Sample/';
+      const route = location.pathname + location.search;
+      location.replace(base + '?__pages_route=' + encodeURIComponent(route) + location.hash);
+    </script>
+  </head>
+  <body>Loading Little Luxe… <a href="/Little_Luxe_Sample/">Go to home</a></body>
+</html>
