@@ -76,3 +76,13 @@ export default defineConfig([
 ])
 
 ```
+
+## Authentication
+
+Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in the environment (or an ignored `.env.local`). Use the browser-safe publishable/anon key, never a service-role key. In Supabase Authentication URL Configuration, allow the app's `/auth/callback` URL for each development and production origin. The default development callback is `http://localhost:5173/auth/callback`. Email registration must be enabled for new users to sign up through the same magic-link form.
+
+Auth follows the existing feature structure in `src/features/auth`: `auth.api.ts` calls the Supabase client, `auth.query.ts` defines Query options and mutations, and `auth.types.ts` defines the minimal context. `useAuth` is mounted once by `appRouter`; it reads verified claims with `getClaims()` and refreshes Query state after Supabase auth events. Supabase manages the session and tokens. Claims calls run outside the auth event callback to avoid its session lock. Auth changes invalidate router guards and clear cached application queries on sign-in/sign-out.
+
+The custom JWT `user_role` claim must contain `customer`, `staff`, or `admin`. Missing/unrecognized roles receive no management access. The storefront is public. Staff/admin can access existing item, category and supplier management; customers cannot see those controls or enter their routes. The existing `/category` page is a category creation form, so it is protected too. Database RLS/RBAC remains the authorization boundary and is not changed by these frontend guards.
+
+`/login` handles both sign-in and registration. `/auth/callback` handles the magic-link return. Authenticated users get an avatar above the navigation links leading to `/profile`, which shows their email and a Query mutation for logout. Visitors get a sign-in/sign-up button at the bottom. `signInDialog` is reusable for future customer actions requiring authentication; it currently handles unsigned visits to `/profile`. This commit does not add a cart workflow or a project settings panel.

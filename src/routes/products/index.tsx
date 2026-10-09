@@ -1,3 +1,4 @@
+import { canManageStore } from "../../features/auth/auth.types";
 import { createFileRoute } from '@tanstack/react-router'
 import Header from '../../components/Header'
 import ProductForm from '../../features/products/components/ProductForm'
@@ -8,12 +9,13 @@ export const Route = createFileRoute('/products/')({
 })
 
 function Products() {
+  const {auth} = Route.useRouteContext();
   return (
     <>
     <Header/>
 
     <div>
-      <ProductForm/>
+      {canManageStore(auth) && <ProductForm/>}
       <ProductGrid/>
     </div>
     </>

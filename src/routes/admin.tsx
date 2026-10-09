@@ -1,8 +1,15 @@
-import { Link, Outlet, createFileRoute } from "@tanstack/react-router";
+import { canManageStore } from "../features/auth/auth.types";
+import { Link, Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 import { Box, Button, Chip, Typography } from "@mui/material";
 import { styles } from "../features/admin/components/Admin.styles";
 
-export const Route = createFileRoute("/admin")({component: Admin});
+export const Route = createFileRoute("/admin")({
+    beforeLoad: ({context}) => {
+        if (!context.auth.isAuthenticated) throw redirect({to: "/login"});
+        if (!canManageStore(context.auth)) throw redirect({to: "/"});
+    },
+    component: Admin,
+});
 
 function Admin() {
     return <Box>

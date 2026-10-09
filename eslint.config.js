@@ -22,7 +22,7 @@ export default defineConfig([
   {
     files: ['src/routes/**/*.{ts,tsx}'],
     rules: {
-      'react-refresh/only-export-components': ['error', { extraHOCs: ['createFileRoute', 'createRootRoute'] }],
+      'react-refresh/only-export-components': ['error', { extraHOCs: ['createFileRoute', 'createRootRoute', 'createRootRouteWithContext'] }],
     },
   },
 ])

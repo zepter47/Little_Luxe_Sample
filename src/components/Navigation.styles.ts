@@ -14,7 +14,7 @@ export const styles = {
       bgcolor: '#fafafa', borderRight: '1px solid #e5e5e5',
     },
   },
-  navigation: { py: 1.5 },
+  navigation: { py: 1.5, display: "flex", flexDirection: "column", minHeight: "100%" },
   navigationHeader: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     minHeight: 48, px: 2.5,

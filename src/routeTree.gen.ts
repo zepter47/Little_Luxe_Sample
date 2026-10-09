@@ -13,9 +13,12 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CategoryRouteImport } from './routes/category'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminCategoriesRouteImport } from './routes/admin/categories'
 import { Route as AdminSuppliersRouteImport } from './routes/admin/suppliers'
+import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as ProductsIndexRouteImport } from './routes/products/index'
 import { Route as ProductsProductIdRouteImport } from './routes/products/$productId'
 
@@ -39,6 +42,16 @@ const CategoryRoute = CategoryRouteImport.update({
   path: '/category',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -53,6 +66,11 @@ const AdminSuppliersRoute = AdminSuppliersRouteImport.update({
   id: '/suppliers',
   path: '/suppliers',
   getParentRoute: () => AdminRoute,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ProductsIndexRoute = ProductsIndexRouteImport.update({
   id: '/products/',
@@ -70,8 +88,11 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/category': typeof CategoryRoute
+  '/login': typeof LoginRoute
+  '/profile': typeof ProfileRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/suppliers': typeof AdminSuppliersRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/products/$productId': typeof ProductsProductIdRoute
   '/admin/': typeof AdminIndexRoute
   '/products/': typeof ProductsIndexRoute
@@ -80,8 +101,11 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/category': typeof CategoryRoute
+  '/login': typeof LoginRoute
+  '/profile': typeof ProfileRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/suppliers': typeof AdminSuppliersRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/products/$productId': typeof ProductsProductIdRoute
   '/admin': typeof AdminIndexRoute
   '/products': typeof ProductsIndexRoute
@@ -92,8 +116,11 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/category': typeof CategoryRoute
+  '/login': typeof LoginRoute
+  '/profile': typeof ProfileRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/suppliers': typeof AdminSuppliersRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/products/$productId': typeof ProductsProductIdRoute
   '/admin/': typeof AdminIndexRoute
   '/products/': typeof ProductsIndexRoute
@@ -105,8 +132,11 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/category'
+    | '/login'
+    | '/profile'
     | '/admin/categories'
     | '/admin/suppliers'
+    | '/auth/callback'
     | '/products/$productId'
     | '/admin/'
     | '/products/'
@@ -115,8 +145,11 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/category'
+    | '/login'
+    | '/profile'
     | '/admin/categories'
     | '/admin/suppliers'
+    | '/auth/callback'
     | '/products/$productId'
     | '/admin'
     | '/products'
@@ -126,8 +159,11 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/category'
+    | '/login'
+    | '/profile'
     | '/admin/categories'
     | '/admin/suppliers'
+    | '/auth/callback'
     | '/products/$productId'
     | '/admin/'
     | '/products/'
@@ -138,6 +174,9 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRouteWithChildren
   CategoryRoute: typeof CategoryRoute
+  LoginRoute: typeof LoginRoute
+  ProfileRoute: typeof ProfileRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
   ProductsProductIdRoute: typeof ProductsProductIdRoute
   ProductsIndexRoute: typeof ProductsIndexRoute
 }
@@ -172,6 +211,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CategoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/': {
       id: '/admin/'
       path: '/'
@@ -192,6 +245,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/suppliers'
       preLoaderRoute: typeof AdminSuppliersRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/products/': {
       id: '/products/'
@@ -229,6 +289,9 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AdminRoute: AdminRouteWithChildren,
   CategoryRoute: CategoryRoute,
+  LoginRoute: LoginRoute,
+  ProfileRoute: ProfileRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
   ProductsProductIdRoute: ProductsProductIdRoute,
   ProductsIndexRoute: ProductsIndexRoute,
 }
