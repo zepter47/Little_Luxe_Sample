@@ -16,3 +16,9 @@ export async function saveItemAsync(item: newItem) {
     return data;
 }
 
+
+export async function getItemAsync(itemId: string) {
+    const {data, error} = await supabase.from("item").select("*").eq("item_id", itemId).maybeSingle();
+    if (error) throw error;
+    return data;
+}
