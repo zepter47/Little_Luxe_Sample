@@ -105,9 +105,11 @@ export type Database = {
       }
       item: {
         Row: {
+          updated_on: string | null
+          updated_by: string | null
+          is_active: boolean | null
           added_by: string | null
           added_on: string | null
-          cost_price: number
           image_path: string | null
           item_category_id: string | null
           item_id: string
@@ -119,9 +121,11 @@ export type Database = {
           uom_id: string | null
         }
         Insert: {
+          updated_on?: string | null
+          updated_by?: string | null
+          is_active?: boolean | null
           added_by?: string | null
           added_on?: string | null
-          cost_price: number
           image_path?: string | null
           item_category_id?: string | null
           item_id?: string
@@ -133,9 +137,11 @@ export type Database = {
           uom_id?: string | null
         }
         Update: {
+          updated_on?: string | null
+          updated_by?: string | null
+          is_active?: boolean | null
           added_by?: string | null
           added_on?: string | null
-          cost_price?: number
           image_path?: string | null
           item_category_id?: string | null
           item_id?: string
@@ -162,6 +168,18 @@ export type Database = {
             referencedColumns: ["uom_id"]
           },
         ]
+      }
+      item_images: {
+        Row: { image_id: string; item_id: string; storage_path: string | null }
+        Insert: { image_id: string; item_id: string; storage_path?: string | null }
+        Update: { image_id?: string; item_id?: string; storage_path?: string | null }
+        Relationships: [{
+          foreignKeyName: "item_images_item_id_fkey"
+          columns: ["item_id"]
+          isOneToOne: false
+          referencedRelation: "item"
+          referencedColumns: ["item_id"]
+        }]
       }
       item_category: {
         Row: {
