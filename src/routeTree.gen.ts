@@ -18,6 +18,7 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminCategoriesRouteImport } from './routes/admin/categories'
 import { Route as AdminSuppliersRouteImport } from './routes/admin/suppliers'
+import { Route as AdminUnitsRouteImport } from './routes/admin/units'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as ProductsIndexRouteImport } from './routes/products/index'
 import { Route as ProductsProductIdRouteImport } from './routes/products/$productId'
@@ -67,6 +68,11 @@ const AdminSuppliersRoute = AdminSuppliersRouteImport.update({
   path: '/suppliers',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminUnitsRoute = AdminUnitsRouteImport.update({
+  id: '/units',
+  path: '/units',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
@@ -92,6 +98,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/suppliers': typeof AdminSuppliersRoute
+  '/admin/units': typeof AdminUnitsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/products/$productId': typeof ProductsProductIdRoute
   '/admin/': typeof AdminIndexRoute
@@ -105,6 +112,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/suppliers': typeof AdminSuppliersRoute
+  '/admin/units': typeof AdminUnitsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/products/$productId': typeof ProductsProductIdRoute
   '/admin': typeof AdminIndexRoute
@@ -120,6 +128,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/suppliers': typeof AdminSuppliersRoute
+  '/admin/units': typeof AdminUnitsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/products/$productId': typeof ProductsProductIdRoute
   '/admin/': typeof AdminIndexRoute
@@ -136,6 +145,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/admin/categories'
     | '/admin/suppliers'
+    | '/admin/units'
     | '/auth/callback'
     | '/products/$productId'
     | '/admin/'
@@ -149,6 +159,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/admin/categories'
     | '/admin/suppliers'
+    | '/admin/units'
     | '/auth/callback'
     | '/products/$productId'
     | '/admin'
@@ -163,6 +174,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/admin/categories'
     | '/admin/suppliers'
+    | '/admin/units'
     | '/auth/callback'
     | '/products/$productId'
     | '/admin/'
@@ -246,6 +258,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSuppliersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/units': {
+      id: '/admin/units'
+      path: '/units'
+      fullPath: '/admin/units'
+      preLoaderRoute: typeof AdminUnitsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/auth/callback': {
       id: '/auth/callback'
       path: '/auth/callback'
@@ -273,12 +292,14 @@ declare module '@tanstack/react-router' {
 interface AdminRouteChildren {
   AdminCategoriesRoute: typeof AdminCategoriesRoute
   AdminSuppliersRoute: typeof AdminSuppliersRoute
+  AdminUnitsRoute: typeof AdminUnitsRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminCategoriesRoute: AdminCategoriesRoute,
   AdminSuppliersRoute: AdminSuppliersRoute,
+  AdminUnitsRoute: AdminUnitsRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
