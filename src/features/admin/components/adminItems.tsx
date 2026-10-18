@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Alert, Box, Button, CircularProgress, Dialog, DialogContent, DialogTitle, Paper, Typography } from "@mui/material";
 import { getItemsQueryOption } from "../../items/item.query";
 import { getCategoryNameQueryOption } from "../../Categories/category.query";
-import ItemDatagrid from "../../items/components/itemDatagrid";
+import AdminItemList from "./AdminItemList";
 import ItemForm from "../../items/components/itemForm";
 import type { item } from "../../items/item.types";
 import { getUnitsQueryOption } from "../../units/unit.query";
@@ -26,7 +26,7 @@ export default function AdminItems() {
         </Box>
         {saved && <Alert severity="success" sx={{mb: 2}}>Item saved. It is now available on the home page.</Alert>}
         {saved && imageWarning && <Alert severity="warning" sx={{mb: 2}}>{imageWarning}</Alert>}
-        <ItemDatagrid items={items.data || []} categories={categories.data || []} units={units.data || []} onEdit={row => {setSaved(false); setEditing(row);}} />
+        <AdminItemList items={items.data || []} categories={categories.data || []} units={units.data || []} onEdit={row => {setSaved(false); setEditing(row);}} />
         <Dialog open={editing !== undefined} fullWidth maxWidth="sm">
             <DialogTitle>{editing ? "Edit item" : "Add item"}</DialogTitle>
             <DialogContent>

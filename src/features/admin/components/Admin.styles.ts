@@ -8,6 +8,10 @@ export const styles = {
     menuLink: {textTransform: "none", color: "#735b4c", px: 3, borderRadius: 2,
         '&[data-status="active"]': {bgcolor: "#fff", color: "#49352b", boxShadow: "0 2px 8px #49352b12", fontWeight: 700}},
     panel: {p: {xs: 2, sm: 3}, borderRadius: 4, borderColor: "#e9dfd7"},
-    toolbar: {display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, mb: 3},
+    listCard: {p: 2, borderRadius: 3, borderColor: "#e9dfd7", boxShadow: "none", overflowWrap: "anywhere"},
+    cardHeading: {display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 2},
+    cardTitle: {fontWeight: 600, color: "#49352b", fontSize: "1rem", minWidth: 0},
+    cardEdit: {minHeight: 44, flexShrink: 0, textTransform: "none"},
+    toolbar: {flexWrap: "wrap", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, mb: 3},
 } satisfies Record<string, SxProps<Theme>>;
 

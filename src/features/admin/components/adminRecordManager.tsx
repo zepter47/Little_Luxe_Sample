@@ -1,8 +1,9 @@
+import AdminResponsiveList from "./AdminResponsiveList";
 import LabeledTextField from "../../../components/forms/LabeledTextField";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Paper, Stack, Typography } from "@mui/material";
-import { DataGrid, type GridColDef } from "@mui/x-data-grid";
+import { type GridColDef } from "@mui/x-data-grid";
 import { styles } from "./Admin.styles";
 
 export type recordField = {name: string; label: string; required?: boolean; type?: "email"; multiline?: boolean; options?: {value: string; label: string}[]};
@@ -54,8 +55,24 @@ export default function AdminRecordManager({title, singular, rows, fields, query
         </Box>
         {saved && <Alert severity="success" sx={{mb: 2}}>{singular} saved successfully.</Alert>}
         {notice && <Alert severity="info" sx={{mb: 2}}>{notice}</Alert>}
-        <DataGrid rows={rows} columns={columns} disableRowSelectionOnClick pageSizeOptions={[5, 10, 25]}
-            initialState={{pagination: {paginationModel: {pageSize: 10}}}} sx={{height: 460, border: 0}} />
+        <AdminResponsiveList rows={rows} columns={columns} getRowId={row => row.id} label={title}
+            getSearchText={row => fields.map(field => field.options?.find(option => option.value === row[field.name])?.label || row[field.name] || "").join(" ")}
+            getSortValue={(row, name) => fields.find(field => field.name === name)?.options?.find(option => option.value === row[name])?.label || row[name] || ""}
+            renderCard={row => <Paper component="article" variant="outlined" sx={styles.listCard}>
+                <Box sx={styles.cardHeading}>
+                    <Typography component="h3" sx={styles.cardTitle}>{row[fields[0].name]}</Typography>
+                    <Button sx={styles.cardEdit} onClick={() => openForm(row)} aria-label={`Edit ${row[fields[0].name]}`}>Edit</Button>
+                </Box>
+                <Box component="dl" sx={{m: 0}}>
+                    {fields.slice(1).map(field => {
+                        const value = field.options?.find(option => option.value === row[field.name])?.label || row[field.name];
+                        return value ? <Box key={field.name} sx={{mt: 1}}>
+                            <Typography component="dt" variant="caption" color="text.secondary">{field.label}</Typography>
+                            <Typography component="dd" variant="body2" sx={{m: 0, whiteSpace: "pre-wrap"}}>{value}</Typography>
+                        </Box> : null;
+                    })}
+                </Box>
+            </Paper>} />
         <Dialog open={editing !== undefined} onClose={() => {if (!mutation.isPending) setEditing(undefined);}} fullWidth maxWidth="sm">
             <Box component="form" onSubmit={submit}>
                 <DialogTitle>{editing ? "Edit" : "Add"} {singular}</DialogTitle>
