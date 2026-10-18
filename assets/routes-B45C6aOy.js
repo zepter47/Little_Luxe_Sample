@@ -1,0 +1,1 @@
+import{t as e}from"./itemCollection-B1K27B3W.js";var t=e;export{t as component};
