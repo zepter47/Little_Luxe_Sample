@@ -1,6 +1,8 @@
+import { fieldStyles } from "../../../components/forms/Field.styles";
 import type { SxProps, Theme } from "@mui/material/styles";
 
 export const styles = {
+    ...fieldStyles,
     heading: {fontFamily: "Georgia, serif", fontWeight: 500, fontSize: {xs: "2rem", md: "2.75rem"}, color: "#49352b"},
     menu: {display: "flex", flexWrap: "wrap", gap: 1, p: 1, my: 3, bgcolor: "#f5eee9", borderRadius: 3},
     menuLink: {textTransform: "none", color: "#735b4c", px: 3, borderRadius: 2,

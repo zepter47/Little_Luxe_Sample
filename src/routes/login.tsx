@@ -1,6 +1,7 @@
+import LabeledTextField from "../components/forms/LabeledTextField";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
-import { Alert, Box, Button, Paper, Stack, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, Paper, Stack, Typography } from "@mui/material";
 import { useState } from "react";
 import { signInMutationOption } from "../features/auth/auth.query";
 import { styles } from "../features/auth/components/Auth.styles";
@@ -24,7 +25,7 @@ function Login() {
             <Button onClick={() => signIn.reset()}>Use another email or send again</Button>
         </Stack> : <Box component="form" onSubmit={event => {event.preventDefault(); signIn.mutate(email);}}>
             <Stack spacing={2}>
-                <TextField label="Email address" type="email" autoComplete="email" required fullWidth
+                <LabeledTextField label="Email address" type="email" autoComplete="email" required fullWidth
                     value={email} onChange={event => setEmail(event.target.value)} disabled={signIn.isPending} />
                 {signIn.error && <Alert severity="error">{signIn.error.message}</Alert>}
                 <Button type="submit" variant="contained" disabled={signIn.isPending} sx={styles.button}>

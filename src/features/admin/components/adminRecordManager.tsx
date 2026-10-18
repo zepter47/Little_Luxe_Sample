@@ -1,6 +1,7 @@
+import LabeledTextField from "../../../components/forms/LabeledTextField";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Paper, Stack, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Paper, Stack, Typography } from "@mui/material";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { styles } from "./Admin.styles";
 
@@ -62,12 +63,12 @@ export default function AdminRecordManager({title, singular, rows, fields, query
                     <Stack spacing={2.5} sx={{pt: 1}}>
                         {mutation.error && <Alert severity="error">{mutation.error.message}</Alert>}
                         {validationError && <Alert severity="error">{validationError}</Alert>}
-                        {fields.map(field => <TextField key={field.name} label={field.label} value={values[field.name] || ""}
+                        {fields.map(field => <LabeledTextField key={field.name} fieldStyles={styles} label={field.label} value={values[field.name] || ""}
                             onChange={event => setValues(previous => ({...previous, [field.name]: event.target.value}))}
                             required={field.required} type={field.type} multiline={field.multiline} minRows={field.multiline ? 3 : undefined}
                             select={!!field.options} fullWidth slotProps={{htmlInput: {pattern: field.required && !field.options ? ".*\\S.*" : undefined}}}>
                             {field.options?.map(option => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
-                        </TextField>)}
+                        </LabeledTextField>)}
                     </Stack>
                 </DialogContent>
                 <DialogActions sx={{p: 3}}>

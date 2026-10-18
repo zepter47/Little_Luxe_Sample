@@ -1,7 +1,8 @@
+import LabeledTextField from "../../../components/forms/LabeledTextField";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Alert, Box, Button, MenuItem, Stack, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, MenuItem, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { itemSchema } from "../item.schema";
 import { itemKeys, type item, type itemFormData } from "../item.types";
@@ -87,26 +88,26 @@ export default function ItemForm({item, categories, units, onSaved, onCancel}: {
             {warning && <Alert severity="warning">{warning}</Alert>}
             <Box component="fieldset" disabled={isSubmitting} sx={{border: 0, p: 0, m: 0, minWidth: 0}}>
             <Stack spacing={2.5}>
-            <Controller name="item_name" control={control} render={({field, fieldState}) =>
-                <TextField {...field} label="Item name" fullWidth error={!!fieldState.error} helperText={fieldState.error?.message} />} />
-            <Controller name="sale_price" control={control} render={({field, fieldState}) =>
-                <TextField {...field} onChange={event => field.onChange(event.target.value === "" ? NaN : Number(event.target.value))}
+            <Controller name="item_name" control={control} render={({field: {ref, ...field}, fieldState}) =>
+                <LabeledTextField {...field} inputRef={ref} label="Item name" fullWidth error={!!fieldState.error} helperText={fieldState.error?.message} />} />
+            <Controller name="sale_price" control={control} render={({field: {ref, ...field}, fieldState}) =>
+                <LabeledTextField {...field} inputRef={ref} onChange={event => field.onChange(event.target.value === "" ? NaN : Number(event.target.value))}
                     label="Sale price" type="number" fullWidth value={Number.isNaN(field.value) ? "" : field.value}
                     slotProps={{htmlInput: {min: 0, step: "0.01"}}}
                     error={!!fieldState.error} helperText={fieldState.error?.message} />} />
-            <Controller name="item_category_id" control={control} render={({field}) =>
-                <TextField {...field} select label="Category" fullWidth>
+            <Controller name="item_category_id" control={control} render={({field: {ref, ...field}}) =>
+                <LabeledTextField {...field} inputRef={ref} select label="Category" fullWidth>
                     <MenuItem value="">Uncategorized</MenuItem>
                     {categories.map(category => <MenuItem key={category.item_category_id} value={category.item_category_id}>{category.category_name}</MenuItem>)}
-                </TextField>} />
-            <Controller name="uom_id" control={control} render={({field, fieldState}) =>
-                <TextField {...field} select required label="Unit of measure" fullWidth error={!!fieldState.error}
+                </LabeledTextField>} />
+            <Controller name="uom_id" control={control} render={({field: {ref, ...field}, fieldState}) =>
+                <LabeledTextField {...field} inputRef={ref} select required label="Unit of measure" fullWidth error={!!fieldState.error}
                     helperText={fieldState.error?.message || (!units.length ? "Add a unit of measure in the admin panel first." : undefined)}>
                     <MenuItem value="" disabled>Select a unit</MenuItem>
                     {units.map(unit => <MenuItem key={unit.uom_id} value={unit.uom_id}>{unit.uom_name}</MenuItem>)}
-                </TextField>} />
-            <Controller name="product_notes" control={control} render={({field}) =>
-                <TextField {...field} label="Description" multiline minRows={3} fullWidth />} />
+                </LabeledTextField>} />
+            <Controller name="product_notes" control={control} render={({field: {ref, ...field}}) =>
+                <LabeledTextField {...field} inputRef={ref} label="Description" multiline minRows={3} fullWidth />} />
             <Typography variant="subtitle1">Profile picture</Typography>
             <Button component="label" variant="outlined" disabled={isSubmitting}>
                 Add profile picture
