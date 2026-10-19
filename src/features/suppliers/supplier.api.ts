@@ -12,7 +12,8 @@ export async function getSupplierCategoriesAsync() {
     return data;
 }
 export async function saveSupplierAsync(supplier: newSupplier, editing: boolean) {
-    const request = editing
+    if (editing && !supplier.supplier_id) throw new Error("Select a supplier to edit.");
+    const request = editing && supplier.supplier_id
         ? supabase.from("supplier").update(supplier).eq("supplier_id", supplier.supplier_id)
         : supabase.from("supplier").insert(supplier);
     const {data, error} = await request.select().single();

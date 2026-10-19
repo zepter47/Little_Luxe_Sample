@@ -15,6 +15,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CategoryRouteImport } from './routes/category'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as StockManagementRouteImport } from './routes/stock-management'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminCategoriesRouteImport } from './routes/admin/categories'
 import { Route as AdminSuppliersRouteImport } from './routes/admin/suppliers'
@@ -51,6 +52,11 @@ const LoginRoute = LoginRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StockManagementRoute = StockManagementRouteImport.update({
+  id: '/stock-management',
+  path: '/stock-management',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/category': typeof CategoryRoute
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
+  '/stock-management': typeof StockManagementRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/suppliers': typeof AdminSuppliersRoute
   '/admin/units': typeof AdminUnitsRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByTo {
   '/category': typeof CategoryRoute
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
+  '/stock-management': typeof StockManagementRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/suppliers': typeof AdminSuppliersRoute
   '/admin/units': typeof AdminUnitsRoute
@@ -126,6 +134,7 @@ export interface FileRoutesById {
   '/category': typeof CategoryRoute
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
+  '/stock-management': typeof StockManagementRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/suppliers': typeof AdminSuppliersRoute
   '/admin/units': typeof AdminUnitsRoute
@@ -143,6 +152,7 @@ export interface FileRouteTypes {
     | '/category'
     | '/login'
     | '/profile'
+    | '/stock-management'
     | '/admin/categories'
     | '/admin/suppliers'
     | '/admin/units'
@@ -157,6 +167,7 @@ export interface FileRouteTypes {
     | '/category'
     | '/login'
     | '/profile'
+    | '/stock-management'
     | '/admin/categories'
     | '/admin/suppliers'
     | '/admin/units'
@@ -172,6 +183,7 @@ export interface FileRouteTypes {
     | '/category'
     | '/login'
     | '/profile'
+    | '/stock-management'
     | '/admin/categories'
     | '/admin/suppliers'
     | '/admin/units'
@@ -188,6 +200,7 @@ export interface RootRouteChildren {
   CategoryRoute: typeof CategoryRoute
   LoginRoute: typeof LoginRoute
   ProfileRoute: typeof ProfileRoute
+  StockManagementRoute: typeof StockManagementRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   ProductsProductIdRoute: typeof ProductsProductIdRoute
   ProductsIndexRoute: typeof ProductsIndexRoute
@@ -235,6 +248,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stock-management': {
+      id: '/stock-management'
+      path: '/stock-management'
+      fullPath: '/stock-management'
+      preLoaderRoute: typeof StockManagementRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -312,6 +332,7 @@ const rootRouteChildren: RootRouteChildren = {
   CategoryRoute: CategoryRoute,
   LoginRoute: LoginRoute,
   ProfileRoute: ProfileRoute,
+  StockManagementRoute: StockManagementRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   ProductsProductIdRoute: ProductsProductIdRoute,
   ProductsIndexRoute: ProductsIndexRoute,

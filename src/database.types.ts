@@ -105,12 +105,10 @@ export type Database = {
       }
       item: {
         Row: {
-          updated_on: string | null
-          updated_by: string | null
-          is_active: boolean | null
           added_by: string | null
           added_on: string | null
           image_path: string | null
+          is_active: boolean | null
           item_category_id: string | null
           item_id: string
           item_name: string
@@ -119,14 +117,14 @@ export type Database = {
           product_notes: string | null
           sale_price: number
           uom_id: string | null
+          updated_by: string | null
+          updated_on: string | null
         }
         Insert: {
-          updated_on?: string | null
-          updated_by?: string | null
-          is_active?: boolean | null
           added_by?: string | null
           added_on?: string | null
           image_path?: string | null
+          is_active?: boolean | null
           item_category_id?: string | null
           item_id?: string
           item_name: string
@@ -135,14 +133,14 @@ export type Database = {
           product_notes?: string | null
           sale_price: number
           uom_id?: string | null
+          updated_by?: string | null
+          updated_on?: string | null
         }
         Update: {
-          updated_on?: string | null
-          updated_by?: string | null
-          is_active?: boolean | null
           added_by?: string | null
           added_on?: string | null
           image_path?: string | null
+          is_active?: boolean | null
           item_category_id?: string | null
           item_id?: string
           item_name?: string
@@ -151,6 +149,8 @@ export type Database = {
           product_notes?: string | null
           sale_price?: number
           uom_id?: string | null
+          updated_by?: string | null
+          updated_on?: string | null
         }
         Relationships: [
           {
@@ -169,65 +169,184 @@ export type Database = {
           },
         ]
       }
-      item_images: {
-        Row: { image_id: string; item_id: string; storage_path: string | null }
-        Insert: { image_id: string; item_id: string; storage_path?: string | null }
-        Update: { image_id?: string; item_id?: string; storage_path?: string | null }
-        Relationships: [{
-          foreignKeyName: "item_images_item_id_fkey"
-          columns: ["item_id"]
-          isOneToOne: false
-          referencedRelation: "item"
-          referencedColumns: ["item_id"]
-        }]
-      }
       item_category: {
         Row: {
+          added_by: string | null
+          added_on: string | null
           category_name: string
           category_notes: string | null
+          is_active: boolean | null
           item_category_id: string
+          updated_by: string | null
+          updated_on: string | null
         }
         Insert: {
+          added_by?: string | null
+          added_on?: string | null
           category_name: string
           category_notes?: string | null
+          is_active?: boolean | null
           item_category_id?: string
+          updated_by?: string | null
+          updated_on?: string | null
         }
         Update: {
+          added_by?: string | null
+          added_on?: string | null
           category_name?: string
           category_notes?: string | null
+          is_active?: boolean | null
           item_category_id?: string
+          updated_by?: string | null
+          updated_on?: string | null
         }
         Relationships: []
+      }
+      item_images: {
+        Row: {
+          image_id: string
+          item_id: string
+          storage_path: string | null
+        }
+        Insert: {
+          image_id: string
+          item_id: string
+          storage_path?: string | null
+        }
+        Update: {
+          image_id?: string
+          item_id?: string
+          storage_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_images_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "item"
+            referencedColumns: ["item_id"]
+          },
+        ]
       }
       item_return: {
         Row: {
           added_by: string | null
           added_on: string | null
+          is_active: boolean | null
+          order_id: string | null
           return_id: string
           return_notes: string | null
-          sale_id: string | null
+          return_status: Database["public"]["Enums"]["return_status"] | null
+          updated_by: string | null
+          updated_on: string | null
         }
         Insert: {
           added_by?: string | null
           added_on?: string | null
-          return_id: string
+          is_active?: boolean | null
+          order_id?: string | null
+          return_id?: string
           return_notes?: string | null
-          sale_id?: string | null
+          return_status?: Database["public"]["Enums"]["return_status"] | null
+          updated_by?: string | null
+          updated_on?: string | null
         }
         Update: {
           added_by?: string | null
           added_on?: string | null
+          is_active?: boolean | null
+          order_id?: string | null
           return_id?: string
           return_notes?: string | null
-          sale_id?: string | null
+          return_status?: Database["public"]["Enums"]["return_status"] | null
+          updated_by?: string | null
+          updated_on?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "fk_return_sale"
-            columns: ["sale_id"]
+            columns: ["order_id"]
             isOneToOne: false
-            referencedRelation: "sale"
-            referencedColumns: ["sale_id"]
+            referencedRelation: "order"
+            referencedColumns: ["order_id"]
+          },
+        ]
+      }
+      order: {
+        Row: {
+          added_by: string | null
+          added_on: string | null
+          is_active: boolean | null
+          order_id: string
+          order_notes: string | null
+          order_status: Database["public"]["Enums"]["order_status"] | null
+          updated_by: string | null
+          updated_on: string | null
+        }
+        Insert: {
+          added_by?: string | null
+          added_on?: string | null
+          is_active?: boolean | null
+          order_id?: string
+          order_notes?: string | null
+          order_status?: Database["public"]["Enums"]["order_status"] | null
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Update: {
+          added_by?: string | null
+          added_on?: string | null
+          is_active?: boolean | null
+          order_id?: string
+          order_notes?: string | null
+          order_status?: Database["public"]["Enums"]["order_status"] | null
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Relationships: []
+      }
+      order_details: {
+        Row: {
+          batch_number: string | null
+          expiry_date: string | null
+          item_id: string | null
+          order_details_id: string
+          order_id: string | null
+          quantity_sold: number | null
+          sale_price: number | null
+        }
+        Insert: {
+          batch_number?: string | null
+          expiry_date?: string | null
+          item_id?: string | null
+          order_details_id?: string
+          order_id?: string | null
+          quantity_sold?: number | null
+          sale_price?: number | null
+        }
+        Update: {
+          batch_number?: string | null
+          expiry_date?: string | null
+          item_id?: string | null
+          order_details_id?: string
+          order_id?: string | null
+          quantity_sold?: number | null
+          sale_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_sale_details_item"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "item"
+            referencedColumns: ["item_id"]
+          },
+          {
+            foreignKeyName: "sale_details_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "order"
+            referencedColumns: ["order_id"]
           },
         ]
       }
@@ -236,25 +355,34 @@ export type Database = {
           added_by: string | null
           added_on: string | null
           invoice_number: string
+          is_active: boolean | null
           purchase_id: string
           purchase_notes: string | null
           supplier_id: string | null
+          updated_by: string | null
+          updated_on: string | null
         }
         Insert: {
           added_by?: string | null
           added_on?: string | null
           invoice_number: string
-          purchase_id: string
+          is_active?: boolean | null
+          purchase_id?: string
           purchase_notes?: string | null
           supplier_id?: string | null
+          updated_by?: string | null
+          updated_on?: string | null
         }
         Update: {
           added_by?: string | null
           added_on?: string | null
           invoice_number?: string
+          is_active?: boolean | null
           purchase_id?: string
           purchase_notes?: string | null
           supplier_id?: string | null
+          updated_by?: string | null
+          updated_on?: string | null
         }
         Relationships: [
           {
@@ -281,7 +409,7 @@ export type Database = {
           cost_price: number
           expiry_date?: string | null
           item_id: string
-          purchase_details_id: string
+          purchase_details_id?: string
           purchase_id: string
           quantity_bought: number
         }
@@ -353,104 +481,25 @@ export type Database = {
           },
         ]
       }
-      sale: {
+      role_permissions: {
         Row: {
-          added_by: string | null
-          added_on: string | null
-          sale_id: string
-          sale_notes: string | null
-          sale_status_id: string | null
+          permission: Database["public"]["Enums"]["app_permission"]
+          role: Database["public"]["Enums"]["app_role"]
         }
         Insert: {
-          added_by?: string | null
-          added_on?: string | null
-          sale_id: string
-          sale_notes?: string | null
-          sale_status_id?: string | null
+          permission: Database["public"]["Enums"]["app_permission"]
+          role: Database["public"]["Enums"]["app_role"]
         }
         Update: {
-          added_by?: string | null
-          added_on?: string | null
-          sale_id?: string
-          sale_notes?: string | null
-          sale_status_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_sale_status"
-            columns: ["sale_status_id"]
-            isOneToOne: false
-            referencedRelation: "sale_status"
-            referencedColumns: ["sale_status_id"]
-          },
-        ]
-      }
-      sale_details: {
-        Row: {
-          batch_number: string | null
-          expiry_date: string | null
-          item_id: string | null
-          quantity_sold: number | null
-          sale_details_id: string
-          sale_id: string | null
-          sale_price: number | null
-        }
-        Insert: {
-          batch_number?: string | null
-          expiry_date?: string | null
-          item_id?: string | null
-          quantity_sold?: number | null
-          sale_details_id: string
-          sale_id?: string | null
-          sale_price?: number | null
-        }
-        Update: {
-          batch_number?: string | null
-          expiry_date?: string | null
-          item_id?: string | null
-          quantity_sold?: number | null
-          sale_details_id?: string
-          sale_id?: string | null
-          sale_price?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_sale_details_item"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "item"
-            referencedColumns: ["item_id"]
-          },
-          {
-            foreignKeyName: "fk_sale_details_parent"
-            columns: ["sale_id"]
-            isOneToOne: false
-            referencedRelation: "sale"
-            referencedColumns: ["sale_id"]
-          },
-        ]
-      }
-      sale_status: {
-        Row: {
-          sale_status_id: string
-          status_name: string
-          status_notes: string | null
-        }
-        Insert: {
-          sale_status_id: string
-          status_name: string
-          status_notes?: string | null
-        }
-        Update: {
-          sale_status_id?: string
-          status_name?: string
-          status_notes?: string | null
+          permission?: Database["public"]["Enums"]["app_permission"]
+          role?: Database["public"]["Enums"]["app_role"]
         }
         Relationships: []
       }
       stock: {
         Row: {
           batch_number: string | null
+          cost_price: number
           expiry_date: string | null
           item_id: string
           quantity_at_hand: number | null
@@ -458,6 +507,7 @@ export type Database = {
         }
         Insert: {
           batch_number?: string | null
+          cost_price: number
           expiry_date?: string | null
           item_id: string
           quantity_at_hand?: number | null
@@ -465,6 +515,7 @@ export type Database = {
         }
         Update: {
           batch_number?: string | null
+          cost_price?: number
           expiry_date?: string | null
           item_id?: string
           quantity_at_hand?: number | null
@@ -484,6 +535,7 @@ export type Database = {
         Row: {
           added_by: string | null
           added_on: string | null
+          is_active: boolean | null
           supplier_address: string | null
           supplier_cat_id: string
           supplier_contact: string | null
@@ -491,21 +543,27 @@ export type Database = {
           supplier_id: string
           supplier_name: string
           supplier_notes: string | null
+          updated_by: string | null
+          updated_on: string | null
         }
         Insert: {
           added_by?: string | null
           added_on?: string | null
+          is_active?: boolean | null
           supplier_address?: string | null
           supplier_cat_id: string
           supplier_contact?: string | null
           supplier_email?: string | null
-          supplier_id: string
+          supplier_id?: string
           supplier_name: string
           supplier_notes?: string | null
+          updated_by?: string | null
+          updated_on?: string | null
         }
         Update: {
           added_by?: string | null
           added_on?: string | null
+          is_active?: boolean | null
           supplier_address?: string | null
           supplier_cat_id?: string
           supplier_contact?: string | null
@@ -513,6 +571,8 @@ export type Database = {
           supplier_id?: string
           supplier_name?: string
           supplier_notes?: string | null
+          updated_by?: string | null
+          updated_on?: string | null
         }
         Relationships: [
           {
@@ -526,37 +586,82 @@ export type Database = {
       }
       supplier_category: {
         Row: {
+          added_by: string | null
+          added_on: string | null
           category_name: string
           category_notes: string | null
+          is_active: boolean | null
           supplier_category_id: string
+          updated_by: string | null
+          updated_on: string | null
         }
         Insert: {
+          added_by?: string | null
+          added_on?: string | null
           category_name: string
           category_notes?: string | null
-          supplier_category_id: string
+          is_active?: boolean | null
+          supplier_category_id?: string
+          updated_by?: string | null
+          updated_on?: string | null
         }
         Update: {
+          added_by?: string | null
+          added_on?: string | null
           category_name?: string
           category_notes?: string | null
+          is_active?: boolean | null
           supplier_category_id?: string
+          updated_by?: string | null
+          updated_on?: string | null
         }
         Relationships: []
       }
       unit_of_measure: {
         Row: {
+          added_by: string | null
+          added_on: string | null
+          is_active: boolean | null
           uom_id: string
           uom_name: string
           uom_notes: string | null
+          updated_by: string | null
+          updated_on: string | null
         }
         Insert: {
+          added_by?: string | null
+          added_on?: string | null
+          is_active?: boolean | null
           uom_id?: string
           uom_name: string
           uom_notes?: string | null
+          updated_by?: string | null
+          updated_on?: string | null
         }
         Update: {
+          added_by?: string | null
+          added_on?: string | null
+          is_active?: boolean | null
           uom_id?: string
           uom_name?: string
           uom_notes?: string | null
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -580,6 +685,13 @@ export type Database = {
         }
         Returns: string
       }
+      authorize: {
+        Args: {
+          requested_permission: Database["public"]["Enums"]["app_permission"]
+        }
+        Returns: boolean
+      }
+      custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       process_secure_purchase: {
         Args: {
           p_invoice_number: string
@@ -589,9 +701,77 @@ export type Database = {
         }
         Returns: string
       }
+      stock_author_emails: {
+        Args: { author_ids: string[] }
+        Returns: {
+          email: string
+          user_id: string
+        }[]
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_permission:
+        | "products.read"
+        | "products.create"
+        | "products.update"
+        | "products.delete"
+        | "categories.read"
+        | "categories.create"
+        | "categories.update"
+        | "images.create"
+        | "UOM.read"
+        | "UOM.create"
+        | "UOM.update"
+        | "UOM.delete"
+        | "categories.delete"
+        | "suppliers.read"
+        | "suppliers.create"
+        | "suppliers.update"
+        | "suppliers.delete"
+        | "supplier_categories.read"
+        | "supplier_categories.create"
+        | "supplier_categories.update"
+        | "supplier_categories.delete"
+        | "purchases.read"
+        | "purchases.create"
+        | "purchases.update"
+        | "purchases.delete"
+        | "purchase_details.read"
+        | "purchase_details.create"
+        | "purchase_details.update"
+        | "purchase_details.delete"
+        | "orders.read"
+        | "orders.create"
+        | "orders.update"
+        | "orders.delete"
+        | "order_details.read"
+        | "order_details.create"
+        | "order_details.update"
+        | "order_details.delete"
+        | "item_returns.read"
+        | "item_returns.create"
+        | "item_returns.update"
+        | "item_returns.delete"
+        | "return_details.read"
+        | "return_details.create"
+        | "return_details.update"
+        | "return_details.delete"
+        | "stock.read"
+        | "stock.create"
+        | "stock.update"
+        | "stock.delete"
+        | "item_images.read"
+        | "item_images.create"
+        | "item_images.update"
+        | "item_images.delete"
+      app_role: "customer" | "staff" | "admin"
+      order_status:
+        | "received"
+        | "processed"
+        | "shipped"
+        | "delivered"
+        | "declined"
+      return_status: "received" | "processed" | "authorized" | "declined"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -718,6 +898,71 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_permission: [
+        "products.read",
+        "products.create",
+        "products.update",
+        "products.delete",
+        "categories.read",
+        "categories.create",
+        "categories.update",
+        "images.create",
+        "UOM.read",
+        "UOM.create",
+        "UOM.update",
+        "UOM.delete",
+        "categories.delete",
+        "suppliers.read",
+        "suppliers.create",
+        "suppliers.update",
+        "suppliers.delete",
+        "supplier_categories.read",
+        "supplier_categories.create",
+        "supplier_categories.update",
+        "supplier_categories.delete",
+        "purchases.read",
+        "purchases.create",
+        "purchases.update",
+        "purchases.delete",
+        "purchase_details.read",
+        "purchase_details.create",
+        "purchase_details.update",
+        "purchase_details.delete",
+        "orders.read",
+        "orders.create",
+        "orders.update",
+        "orders.delete",
+        "order_details.read",
+        "order_details.create",
+        "order_details.update",
+        "order_details.delete",
+        "item_returns.read",
+        "item_returns.create",
+        "item_returns.update",
+        "item_returns.delete",
+        "return_details.read",
+        "return_details.create",
+        "return_details.update",
+        "return_details.delete",
+        "stock.read",
+        "stock.create",
+        "stock.update",
+        "stock.delete",
+        "item_images.read",
+        "item_images.create",
+        "item_images.update",
+        "item_images.delete",
+      ],
+      app_role: ["customer", "staff", "admin"],
+      order_status: [
+        "received",
+        "processed",
+        "shipped",
+        "delivered",
+        "declined",
+      ],
+      return_status: ["received", "processed", "authorized", "declined"],
+    },
   },
 } as const

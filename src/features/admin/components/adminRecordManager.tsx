@@ -6,12 +6,12 @@ import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, 
 import { type GridColDef } from "@mui/x-data-grid";
 import { styles } from "./Admin.styles";
 
-export type recordField = {name: string; label: string; required?: boolean; type?: "email"; multiline?: boolean; options?: {value: string; label: string}[]};
+export type recordField = {name: string; label: string; required?: boolean; defaultValue?: string; type?: "email" | "number" | "date"; min?: number; step?: number; multiline?: boolean; options?: {value: string; label: string}[]};
 export type adminRecord = {id: string; [key: string]: string};
 
-export default function AdminRecordManager({title, singular, rows, fields, queryKey, onSave, notice}: {
+export default function AdminRecordManager({title, singular, rows, fields, queryKey, onSave, notice, displayFields = fields, onSelect}: {
     title: string; singular: string; rows: adminRecord[]; fields: recordField[];
-    queryKey: readonly string[]; onSave: (values: Record<string, string>, id?: string) => Promise<unknown>; notice?: string;
+    queryKey: readonly string[]; onSave: (values: Record<string, string>, id?: string) => Promise<unknown>; notice?: string; displayFields?: recordField[]; onSelect?: (row: adminRecord) => void;
 }) {
     const [editing, setEditing] = useState<adminRecord | null | undefined>(undefined);
     const [values, setValues] = useState<Record<string, string>>({});
@@ -21,7 +21,7 @@ export default function AdminRecordManager({title, singular, rows, fields, query
     const mutation = useMutation({mutationFn: ({values, id}: {values: Record<string, string>; id?: string}) => onSave(values, id)});
     function openForm(row: adminRecord | null) {
         setEditing(row);
-        setValues(Object.fromEntries(fields.map(field => [field.name, row?.[field.name] || ""])));
+        setValues(Object.fromEntries(fields.map(field => [field.name, row?.[field.name] ?? field.defaultValue ?? ""])));
         mutation.reset();
         setSaved(false);
         setValidationError("");
@@ -42,12 +42,12 @@ export default function AdminRecordManager({title, singular, rows, fields, query
             setSaved(true);
         } catch { /* Keep the form open and display the save error. */ }
     }
-    const columns: GridColDef<adminRecord>[] = fields.filter(field => !field.multiline).map(field => ({
+    const columns: GridColDef<adminRecord>[] = displayFields.filter(field => !field.multiline).map(field => ({
         field: field.name, headerName: field.label, flex: 1, minWidth: 170,
         valueFormatter: value => field.options?.find(option => option.value === value)?.label || value,
     }));
-    columns.push({field: "actions", headerName: "Actions", width: 100, sortable: false, filterable: false,
-        renderCell: ({row}) => <Button onClick={() => openForm(row)} aria-label={`Edit ${row[fields[0].name]}`}>Edit</Button>});
+    columns.push({field: "actions", headerName: "Actions", width: onSelect ? 170 : 100, sortable: false, filterable: false,
+        renderCell: ({row}) => <><Button onClick={() => openForm(row)}>Edit</Button>{onSelect && <Button onClick={() => onSelect(row)}>Select</Button>}</>});
     return <Paper variant="outlined" sx={styles.panel}>
         <Box sx={styles.toolbar}>
             <Typography variant="h5" component="h2">{title}</Typography>
@@ -56,15 +56,15 @@ export default function AdminRecordManager({title, singular, rows, fields, query
         {saved && <Alert severity="success" sx={{mb: 2}}>{singular} saved successfully.</Alert>}
         {notice && <Alert severity="info" sx={{mb: 2}}>{notice}</Alert>}
         <AdminResponsiveList rows={rows} columns={columns} getRowId={row => row.id} label={title}
-            getSearchText={row => fields.map(field => field.options?.find(option => option.value === row[field.name])?.label || row[field.name] || "").join(" ")}
-            getSortValue={(row, name) => fields.find(field => field.name === name)?.options?.find(option => option.value === row[name])?.label || row[name] || ""}
+            getSearchText={row => displayFields.map(field => field.options?.find(option => option.value === row[field.name])?.label || row[field.name] || "").join(" ")}
+            getSortValue={(row, name) => displayFields.find(field => field.name === name)?.options?.find(option => option.value === row[name])?.label || row[name] || ""}
             renderCard={row => <Paper component="article" variant="outlined" sx={styles.listCard}>
-                <Box sx={styles.cardHeading}>
-                    <Typography component="h3" sx={styles.cardTitle}>{row[fields[0].name]}</Typography>
-                    <Button sx={styles.cardEdit} onClick={() => openForm(row)} aria-label={`Edit ${row[fields[0].name]}`}>Edit</Button>
+                <Box sx={onSelect ? {...styles.cardHeading, flexDirection: "column", gap: 1} : styles.cardHeading}>
+                    <Typography component="h3" sx={styles.cardTitle}>{row[displayFields[0].name]}</Typography>
+                    <Box sx={{display: "flex", flexShrink: 0, alignSelf: "flex-end"}}><Button sx={styles.cardEdit} onClick={() => openForm(row)} aria-label={`Edit ${row[displayFields[0].name]}`}>Edit</Button>{onSelect && <Button sx={styles.cardEdit} onClick={() => onSelect(row)}>Select</Button>}</Box>
                 </Box>
                 <Box component="dl" sx={{m: 0}}>
-                    {fields.slice(1).map(field => {
+                    {displayFields.slice(1).map(field => {
                         const value = field.options?.find(option => option.value === row[field.name])?.label || row[field.name];
                         return value ? <Box key={field.name} sx={{mt: 1}}>
                             <Typography component="dt" variant="caption" color="text.secondary">{field.label}</Typography>
@@ -83,7 +83,7 @@ export default function AdminRecordManager({title, singular, rows, fields, query
                         {fields.map(field => <LabeledTextField key={field.name} fieldStyles={styles} label={field.label} value={values[field.name] || ""}
                             onChange={event => setValues(previous => ({...previous, [field.name]: event.target.value}))}
                             required={field.required} type={field.type} multiline={field.multiline} minRows={field.multiline ? 3 : undefined}
-                            select={!!field.options} fullWidth slotProps={{htmlInput: {pattern: field.required && !field.options ? ".*\\S.*" : undefined}}}>
+                            select={!!field.options} fullWidth slotProps={{htmlInput: {min: field.min, step: field.step, pattern: field.required && !field.options && !field.type ? ".*\\S.*" : undefined}}}>
                             {field.options?.map(option => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
                         </LabeledTextField>)}
                     </Stack>
