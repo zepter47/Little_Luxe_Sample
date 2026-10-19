@@ -47,11 +47,11 @@ function StockEntity({entity}: {entity: Entity}) {
     fields.push({name: config.notes, label: 'Notes', multiline: true});
     const displayFields: recordField[] = [
         ...(entity === 'purchase' ? [{name: 'invoice_number', label: 'Invoice'}] : []),
-        {name: 'summary_value', label: entity === 'order' ? 'Total amount sold' : entity === 'purchase' ? 'Quantity bought' : 'Quantity returned',
-            type: 'number', format: entity === 'order' ? 'amount' : 'quantity'},
         {name: 'author_email', label: 'Added by'},
         {name: 'added_on_display', label: 'Added on'},
         ...fields.filter(field => field.name !== config.notes && field.name !== 'invoice_number' && field.name !== 'order_id'),
+        {name: 'summary_value', label: entity === 'order' ? 'Amount' : 'Quantity',
+            type: 'number', format: entity === 'order' ? 'amount' : 'quantity'},
     ];
     const rows = (records.data || []).map(row => ({...row, added_on_display: row.added_on ? new Date(row.added_on.endsWith('Z') || /[+-]\d\d:\d\d$/.test(row.added_on) ? row.added_on : `${row.added_on}Z`).toLocaleString() : '—'}));
     if (creating) return <StockDocumentForm entity={entity} fields={fields} lookups={lookups.data!}

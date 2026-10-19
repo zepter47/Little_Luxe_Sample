@@ -1,0 +1,1 @@
+import{t as e}from"./itemCollection-CgL1_dtL.js";var t=e;export{t as component};
