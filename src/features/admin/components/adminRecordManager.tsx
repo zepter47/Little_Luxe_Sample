@@ -6,8 +6,14 @@ import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, 
 import { type GridColDef } from "@mui/x-data-grid";
 import { styles } from "./Admin.styles";
 
-export type recordField = {name: string; label: string; required?: boolean; defaultValue?: string; type?: "email" | "number" | "date"; min?: number; step?: number; multiline?: boolean; options?: {value: string; label: string}[]};
+export type recordField = {name: string; label: string; required?: boolean; defaultValue?: string; format?: "amount" | "quantity"; type?: "email" | "number" | "date"; min?: number; step?: number; multiline?: boolean; options?: {value: string; label: string}[]};
 export type adminRecord = {id: string; [key: string]: string};
+
+function displayValue(field: recordField, value: string) {
+    if (field.format) return Number(value || 0).toLocaleString(undefined, field.format === "amount"
+        ? {minimumFractionDigits: 2, maximumFractionDigits: 2} : {maximumFractionDigits: 0});
+    return field.options?.find(option => option.value === value)?.label || value;
+}
 
 export default function AdminRecordManager({title, singular, rows, fields, queryKey, onSave, notice, displayFields = fields, onSelect, onAdd}: {
     title: string; singular: string; rows: adminRecord[]; fields: recordField[];
@@ -44,7 +50,9 @@ export default function AdminRecordManager({title, singular, rows, fields, query
     }
     const columns: GridColDef<adminRecord>[] = displayFields.filter(field => !field.multiline).map(field => ({
         field: field.name, headerName: field.label, flex: 1, minWidth: 170,
-        valueFormatter: value => field.options?.find(option => option.value === value)?.label || value,
+        type: field.type === "number" ? "number" : undefined,
+        valueGetter: (_, row) => field.type === "number" ? Number(row[field.name] || 0) : row[field.name],
+        valueFormatter: value => displayValue(field, String(value ?? "")),
     }));
     columns.push({field: "actions", headerName: "Actions", width: onSelect ? 170 : 100, sortable: false, filterable: false,
         renderCell: ({row}) => <><Button onClick={() => openForm(row)}>Edit</Button>{onSelect && <Button onClick={() => onSelect(row)}>Select</Button>}</>});
@@ -56,16 +64,16 @@ export default function AdminRecordManager({title, singular, rows, fields, query
         {saved && <Alert severity="success" sx={{mb: 2}}>{singular} saved successfully.</Alert>}
         {notice && <Alert severity="info" sx={{mb: 2}}>{notice}</Alert>}
         <AdminResponsiveList rows={rows} columns={columns} getRowId={row => row.id} label={title}
-            getSearchText={row => displayFields.map(field => field.options?.find(option => option.value === row[field.name])?.label || row[field.name] || "").join(" ")}
-            getSortValue={(row, name) => displayFields.find(field => field.name === name)?.options?.find(option => option.value === row[name])?.label || row[name] || ""}
+            getSearchText={row => displayFields.map(field => displayValue(field, row[field.name] || "")).join(" ")}
+            getSortValue={(row, name) => displayFields.find(field => field.name === name)?.type === "number" ? Number(row[name] || 0) : displayFields.find(field => field.name === name)?.options?.find(option => option.value === row[name])?.label || row[name] || ""}
             renderCard={row => <Paper component="article" variant="outlined" sx={styles.listCard}>
                 <Box sx={onSelect ? {...styles.cardHeading, flexDirection: "column", gap: 1} : styles.cardHeading}>
-                    <Typography component="h3" sx={styles.cardTitle}>{row[displayFields[0].name]}</Typography>
+                    <Typography component="h3" sx={styles.cardTitle}>{displayFields[0].format && <Typography component="span" variant="caption" color="text.secondary" sx={{display: "block"}}>{displayFields[0].label}</Typography>}{displayValue(displayFields[0], row[displayFields[0].name])}</Typography>
                     <Box sx={{display: "flex", flexShrink: 0, alignSelf: "flex-end"}}><Button sx={styles.cardEdit} onClick={() => openForm(row)} aria-label={`Edit ${row[displayFields[0].name]}`}>Edit</Button>{onSelect && <Button sx={styles.cardEdit} onClick={() => onSelect(row)}>Select</Button>}</Box>
                 </Box>
                 <Box component="dl" sx={{m: 0}}>
                     {displayFields.slice(1).map(field => {
-                        const value = field.options?.find(option => option.value === row[field.name])?.label || row[field.name];
+                        const value = displayValue(field, row[field.name]);
                         return value ? <Box key={field.name} sx={{mt: 1}}>
                             <Typography component="dt" variant="caption" color="text.secondary">{field.label}</Typography>
                             <Typography component="dd" variant="body2" sx={{m: 0, whiteSpace: "pre-wrap"}}>{value}</Typography>

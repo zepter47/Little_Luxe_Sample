@@ -16,13 +16,23 @@ function normalize(row: object, id: string): adminRecord {
 }
 
 export async function getStockRecords(entity: Entity): Promise<adminRecord[]> {
-    const {data, error} = await supabase.from(entity).select('*').order('added_on', {ascending: false});
+    const {data, error} = entity === 'order'
+        ? await supabase.from('order').select('*, summary:order_details(quantity_sold,sale_price)').order('added_on', {ascending: false})
+        : entity === 'purchase'
+            ? await supabase.from('purchase').select('*, summary:purchase_details(quantity_bought)').order('added_on', {ascending: false})
+            : await supabase.from('item_return').select('*, summary:return_details(quantity_returned)').order('added_on', {ascending: false});
     if (error) throw error;
     const ids = [...new Set(data.flatMap(row => row.added_by ? [row.added_by] : []))];
     const authors = ids.length ? await supabase.rpc('stock_author_emails', {author_ids: ids}) : {data: [], error: null};
     if (authors.error) throw authors.error;
     const emails = new Map(authors.data?.map(author => [author.user_id, author.email]));
-    return data.map(row => ({...normalize(row, entityInfo[entity].id), author_email: row.added_by ? emails.get(row.added_by) || 'Email unavailable' : 'Not recorded'}));
+    return data.map(({summary, ...row}) => {
+        const total = summary.reduce((sum, line) => sum + ('quantity_sold' in line
+            ? Number(line.quantity_sold || 0) * Number(line.sale_price || 0)
+            : 'quantity_bought' in line ? Number(line.quantity_bought || 0) : Number(line.quantity_returned || 0)), 0);
+        return {...normalize(row, entityInfo[entity].id), summary_value: String(total),
+            author_email: row.added_by ? emails.get(row.added_by) || 'Email unavailable' : 'Not recorded'};
+    });
 }
 
 export async function getStockDetails(entity: Entity, parentId: string) {
