@@ -9,9 +9,9 @@ import { styles } from "./Admin.styles";
 export type recordField = {name: string; label: string; required?: boolean; defaultValue?: string; type?: "email" | "number" | "date"; min?: number; step?: number; multiline?: boolean; options?: {value: string; label: string}[]};
 export type adminRecord = {id: string; [key: string]: string};
 
-export default function AdminRecordManager({title, singular, rows, fields, queryKey, onSave, notice, displayFields = fields, onSelect}: {
+export default function AdminRecordManager({title, singular, rows, fields, queryKey, onSave, notice, displayFields = fields, onSelect, onAdd}: {
     title: string; singular: string; rows: adminRecord[]; fields: recordField[];
-    queryKey: readonly string[]; onSave: (values: Record<string, string>, id?: string) => Promise<unknown>; notice?: string; displayFields?: recordField[]; onSelect?: (row: adminRecord) => void;
+    queryKey: readonly string[]; onSave: (values: Record<string, string>, id?: string) => Promise<unknown>; notice?: string; displayFields?: recordField[]; onSelect?: (row: adminRecord) => void; onAdd?: () => void;
 }) {
     const [editing, setEditing] = useState<adminRecord | null | undefined>(undefined);
     const [values, setValues] = useState<Record<string, string>>({});
@@ -51,7 +51,7 @@ export default function AdminRecordManager({title, singular, rows, fields, query
     return <Paper variant="outlined" sx={styles.panel}>
         <Box sx={styles.toolbar}>
             <Typography variant="h5" component="h2">{title}</Typography>
-            <Button variant="contained" onClick={() => openForm(null)}>Add {singular}</Button>
+            <Button variant="contained" onClick={() => onAdd ? onAdd() : openForm(null)}>Add {singular}</Button>
         </Box>
         {saved && <Alert severity="success" sx={{mb: 2}}>{singular} saved successfully.</Alert>}
         {notice && <Alert severity="info" sx={{mb: 2}}>{notice}</Alert>}

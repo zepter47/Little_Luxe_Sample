@@ -1,3 +1,4 @@
+import StockDocumentForm from './StockDocumentForm';
 import NavigationStrip from '../../components/NavigationStrip';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -24,6 +25,8 @@ export default function StockManagement() {
 
 function StockEntity({entity}: {entity: Entity}) {
     const queryClient = useQueryClient();
+    const [creating, setCreating] = useState(false);
+    const [created, setCreated] = useState(false);
     const [selected, setSelected] = useState<adminRecord | null>(null);
     const config = entityInfo[entity];
     const records = useQuery({queryKey: ['stock', entity], queryFn: () => getStockRecords(entity)});
@@ -50,6 +53,8 @@ function StockEntity({entity}: {entity: Entity}) {
         ...fields.filter(field => field.name !== config.notes && field.name !== 'invoice_number'),
     ];
     const rows = (records.data || []).map(row => ({...row, added_on_display: row.added_on ? new Date(row.added_on.endsWith('Z') || /[+-]\d\d:\d\d$/.test(row.added_on) ? row.added_on : `${row.added_on}Z`).toLocaleString() : '—'}));
+    if (creating) return <StockDocumentForm entity={entity} fields={fields} lookups={lookups.data!}
+        onClose={() => setCreating(false)} onSaved={() => {setCreating(false); setCreated(true);}} />;
     if (selected) {
         const detailFields: recordField[] = [
             {name: 'item_id', label: 'Item', required: true, options: itemOptions},
@@ -69,10 +74,13 @@ function StockEntity({entity}: {entity: Entity}) {
                 onSave={(values, id) => saveStockDetail(entity, selected.id, values, id)} />
         </Box>;
     }
-    return <AdminRecordManager title={config.title} singular={config.singular} rows={rows} fields={fields} displayFields={displayFields}
+    return <Box>
+        {created && <Alert severity="success" sx={{mb: 2}}>{config.singular[0].toUpperCase() + config.singular.slice(1)} and all item lines saved successfully.</Alert>}
+        <AdminRecordManager title={config.title} singular={config.singular} rows={rows} fields={fields} displayFields={displayFields}
         queryKey={['stock', entity]} onSave={async (values, id) => {
             const result = await saveStockRecord(entity, values, id);
             await queryClient.invalidateQueries({queryKey: ['stock-options']});
             return result;
-        }} onSelect={setSelected} />;
+        }} onSelect={setSelected} onAdd={() => {setCreated(false); setCreating(true);}} />
+    </Box>;
 }

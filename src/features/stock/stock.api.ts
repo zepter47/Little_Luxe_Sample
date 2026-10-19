@@ -1,3 +1,4 @@
+import type { DocumentLineInput } from './stockDocument.model';
 import type { Database } from '../../database.types';
 import { supabase } from '../../lib/supabase';
 import type { adminRecord } from '../admin/components/adminRecordManager';
@@ -37,7 +38,7 @@ export async function getStockDetails(entity: Entity, parentId: string) {
 
 export async function getStockOptions() {
     const [items, suppliers, orders] = await Promise.all([
-        supabase.from('item').select('item_id,item_name').order('item_name'),
+        supabase.from('item').select('item_id,item_name,sale_price').order('item_name'),
         supabase.from('supplier').select('supplier_id,supplier_name').order('supplier_name'),
         supabase.from('order').select('order_id').order('added_on', {ascending: false}),
     ]);
@@ -46,20 +47,21 @@ export async function getStockOptions() {
 }
 
 export async function saveStockRecord(entity: Entity, values: Record<string, string>, id?: string) {
+    if (!id) throw new Error('Create the document together with its item lines.');
     const {data: {user}, error: authError} = await supabase.auth.getUser();
     if (authError) throw authError;
     if (!user) throw new Error('Please sign in to save stock records.');
-    const audit: {updated_by?: string; updated_on?: string; added_by?: string; is_active?: boolean} = id ? {updated_by: user.id, updated_on: new Date().toISOString()} : {added_by: user.id, is_active: true};
+    const audit = {updated_by: user.id, updated_on: new Date().toISOString()};
     let result;
     if (entity === 'order') {
         const payload: Database['public']['Tables']['order']['Insert'] = {...audit, order_notes: values.order_notes || null, order_status: values.order_status as Database['public']['Enums']['order_status']};
-        result = await (id ? supabase.from('order').update(payload).eq('order_id', id) : supabase.from('order').insert(payload)).select('order_id').single();
+        result = await supabase.from('order').update(payload).eq('order_id', id).select('order_id').single();
     } else if (entity === 'purchase') {
         const payload: Database['public']['Tables']['purchase']['Insert'] = {...audit, invoice_number: values.invoice_number, supplier_id: values.supplier_id || null, purchase_notes: values.purchase_notes || null};
-        result = await (id ? supabase.from('purchase').update(payload).eq('purchase_id', id) : supabase.from('purchase').insert(payload)).select('purchase_id').single();
+        result = await supabase.from('purchase').update(payload).eq('purchase_id', id).select('purchase_id').single();
     } else {
         const payload: Database['public']['Tables']['item_return']['Insert'] = {...audit, order_id: values.order_id || null, return_notes: values.return_notes || null, return_status: values.return_status as Database['public']['Enums']['return_status']};
-        result = await (id ? supabase.from('item_return').update(payload).eq('return_id', id) : supabase.from('item_return').insert(payload)).select('return_id').single();
+        result = await supabase.from('item_return').update(payload).eq('return_id', id).select('return_id').single();
     }
     if (result.error) throw result.error;
     return result.data;
@@ -86,4 +88,19 @@ export async function saveStockDetail(entity: Entity, parentId: string, values: 
     }
     if (result.error) throw result.error;
     return result.data;
+}
+
+export type StockOptions = Awaited<ReturnType<typeof getStockOptions>>;
+
+export async function getReturnOrderLines(orderId: string) {
+    const {data, error} = await supabase.from('order_details').select('*').eq('order_id', orderId);
+    if (error) throw error;
+    return data;
+}
+
+export async function saveStockDocument(entity: Entity, parent: Record<string, string>, lines: DocumentLineInput[]) {
+    const {data, error} = await supabase.rpc('create_stock_document', {p_entity: entity, p_parent: parent, p_lines: lines});
+    if (error) throw error;
+    if (!data) throw new Error('The document could not be saved. Please try again.');
+    return data;
 }
