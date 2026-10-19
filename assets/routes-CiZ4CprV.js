@@ -1,0 +1,1 @@
+import{t as e}from"./itemCollection-CUZmEw4S.js";var t=e;export{t as component};
