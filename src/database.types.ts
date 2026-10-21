@@ -670,6 +670,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cart_checkout: {
+        Args: { p_items: Json; p_request_id: string; p_confirm: boolean }
+        Returns: Json
+      }
+
       create_stock_document: {
         Args: {p_entity: string; p_parent: Json; p_lines: Json}
         Returns: string
