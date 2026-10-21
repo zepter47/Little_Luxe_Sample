@@ -25,7 +25,7 @@ export const Route = createRootRouteWithContext<{auth: AuthState}>()({ component
 function RootComponent() {
   const {auth} = Route.useRouteContext();
   const { items } = useCart()
-  const cartCount = items.reduce((sum, item) => sum + item.quantity, 0)
+  const cartCount = items.length
   const [mobileOpen, setMobileOpen] = useState(false)
   const theme = useTheme()
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'))

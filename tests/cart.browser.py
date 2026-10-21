@@ -77,7 +77,7 @@ with sync_playwright() as p:
     expect(page.get_by_text('Estimated total: 15.50',exact=True)).to_be_visible()
     page.get_by_role('button',name='Increase quantity of Floral Dress',exact=True).click()
     expect(page.get_by_text('Estimated total: 31.00',exact=True)).to_be_visible()
-    expect(page.locator('nav a[href$="/cart"] .MuiBadge-badge')).to_have_text('2')
+    expect(page.locator('nav a[href$="/cart"] .MuiBadge-badge')).to_have_text('1')
     page.reload()
     expect(page.get_by_text('Estimated total: 31.00',exact=True)).to_be_visible()
     page.get_by_role('button',name='Decrease quantity of Floral Dress',exact=True).click()
