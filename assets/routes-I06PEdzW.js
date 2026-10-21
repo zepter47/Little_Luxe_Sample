@@ -1,1 +1,0 @@
-import{t as e}from"./itemCollection-CHWGAM6L.js";var t=e;export{t as component};
