@@ -93,3 +93,16 @@ Scratch work and build output are not committed. No supplier changes remain in t
 - Direct table reads of the legacy stored `is_stocked` column are not authoritative; use the new read functions for current availability.
 - The security advisor still reports existing mutable-search-path functions (`add_item_with_category_name`, `process_secure_purchase`, `custom_access_token_hook`), exposed privileged functions (`authorize`, `handle_new_user_role`, `process_secure_purchase`), RLS tables without policies (`cart`, `games`), and disabled leaked-password protection. These broader issues were not rewritten here. The old item-creation function is now inaccessible to ordinary callers, but its retained definition can still be flagged.
 - Advisor references: https://supabase.com/docs/guides/database/database-linter?lint=0011_function_search_path_mutable ; https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable ; https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable ; https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy ; https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
+
+## Follow-up: remove deferred stock workflow functions
+
+At the user's request, applied migration `20261022205427_remove_deferred_stock_document_and_author_email_functions` to remove `public.stock_author_emails(uuid[])`, `private.stock_author_emails(uuid[])`, and `public.create_stock_document(text,jsonb,jsonb)`. Used RESTRICT, not CASCADE; verified zero matching functions remain. No records or tables were deleted, and no logs were queried.
+
+Additional repository changes:
+- New migration file records the exact removal. Historical creation migrations remain as history; the removal runs afterward.
+- `src/database.types.ts`: removed declarations for the two deleted public RPCs.
+- `src/features/stock/stock.api.ts`: removed the author-email RPC call; lists use the existing author UUID. Document creation rejects locally with an explicit paused-workflow message instead of calling a removed RPC. No replacement transaction logic was added.
+- `src/features/stock/StockManagement.tsx`: identifies authors as user IDs and displays a pause message when Add is selected. The document creation form is not opened. Existing record browsing and editing paths were not redesigned.
+- This report records the follow-up and supersedes earlier references to these functions as existing.
+
+Build, lint and existing tests were checked for the follow-up. Orders, purchases and returns still require the separately requested future review; their existing editing paths should not be treated as a completed inventory implementation.

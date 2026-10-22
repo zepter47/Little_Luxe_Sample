@@ -26,6 +26,7 @@ export default function StockManagement() {
 function StockEntity({entity}: {entity: Entity}) {
     const queryClient = useQueryClient();
     const [creating, setCreating] = useState(false);
+    const [creationPaused, setCreationPaused] = useState(false);
     const [created, setCreated] = useState(false);
     const [selected, setSelected] = useState<adminRecord | null>(null);
     const config = entityInfo[entity];
@@ -47,7 +48,7 @@ function StockEntity({entity}: {entity: Entity}) {
     fields.push({name: config.notes, label: 'Notes', multiline: true});
     const displayFields: recordField[] = [
         ...(entity === 'purchase' ? [{name: 'invoice_number', label: 'Invoice'}] : []),
-        {name: 'author_email', label: 'Added by'},
+        {name: 'author_id', label: 'Added by (user ID)'},
         {name: 'added_on_display', label: 'Added on'},
         ...fields.filter(field => field.name !== config.notes && field.name !== 'invoice_number' && field.name !== 'order_id'),
         {name: 'summary_value', label: entity === 'order' ? 'Amount' : 'Quantity',
@@ -68,7 +69,7 @@ function StockEntity({entity}: {entity: Entity}) {
             <Box sx={{mb: 3, p: 2, borderRadius: 3, bgcolor: '#f5eee9'}}>
                 <Typography variant="overline">Selected {config.singular}</Typography>
                 <Typography sx={{fontWeight: 600, overflowWrap: 'anywhere'}}>{entity === 'purchase' ? selected.invoice_number : selected.id}</Typography>
-                <Typography color="text.secondary">{selected.author_email} · {selected[config.notes] || 'No notes'}</Typography>
+                <Typography color="text.secondary">{selected.author_id} · {selected[config.notes] || 'No notes'}</Typography>
             </Box>
             <AdminRecordManager key={`${entity}-${selected.id}`} title={`${config.title === 'Item returns' ? 'Return' : config.title.slice(0, -1)} details`} singular="detail"
                 rows={details.data || []} fields={detailFields} queryKey={['stock-details', entity, selected.id]}
@@ -80,12 +81,13 @@ function StockEntity({entity}: {entity: Entity}) {
         </Box>;
     }
     return <Box>
+        {creationPaused && <Alert severity="info" sx={{mb: 2}}>Creating orders, purchases, and returns is paused pending workflow review.</Alert>}
         {created && <Alert severity="success" sx={{mb: 2}}>{config.singular[0].toUpperCase() + config.singular.slice(1)} and all item lines saved successfully.</Alert>}
         <AdminRecordManager title={config.title} singular={config.singular} rows={rows} fields={fields} displayFields={displayFields}
         queryKey={['stock', entity]} onSave={async (values, id) => {
             const result = await saveStockRecord(entity, values, id);
             await queryClient.invalidateQueries({queryKey: ['stock-options']});
             return result;
-        }} onSelect={setSelected} onAdd={() => {setCreated(false); setCreating(true);}} />
+        }} onSelect={setSelected} onAdd={() => setCreationPaused(true)} />
     </Box>;
 }

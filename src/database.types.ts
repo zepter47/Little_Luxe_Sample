@@ -719,10 +719,6 @@ export type Database = {
         Returns: Json
       }
 
-      create_stock_document: {
-        Args: {p_entity: string; p_parent: Json; p_lines: Json}
-        Returns: string
-      }
       add_item_with_category_name: {
         Args: {
           p_added_by: string
@@ -753,13 +749,6 @@ export type Database = {
           p_supplier_name: string
         }
         Returns: string
-      }
-      stock_author_emails: {
-        Args: { author_ids: string[] }
-        Returns: {
-          email: string
-          user_id: string
-        }[]
       }
     }
     Enums: {

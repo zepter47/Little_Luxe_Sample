@@ -22,16 +22,12 @@ export async function getStockRecords(entity: Entity): Promise<adminRecord[]> {
             ? await supabase.from('purchase').select('*, summary:purchase_details(quantity_bought)').order('added_on', {ascending: false})
             : await supabase.from('item_return').select('*, summary:return_details(quantity_returned)').order('added_on', {ascending: false});
     if (error) throw error;
-    const ids = [...new Set(data.flatMap(row => row.added_by ? [row.added_by] : []))];
-    const authors = ids.length ? await supabase.rpc('stock_author_emails', {author_ids: ids}) : {data: [], error: null};
-    if (authors.error) throw authors.error;
-    const emails = new Map(authors.data?.map(author => [author.user_id, author.email]));
     return data.map(({summary, ...row}) => {
         const total = summary.reduce((sum, line) => sum + ('quantity_sold' in line
             ? Number(line.quantity_sold || 0) * Number(line.sale_price || 0)
             : 'quantity_bought' in line ? Number(line.quantity_bought || 0) : Number(line.quantity_returned || 0)), 0);
         return {...normalize(row, entityInfo[entity].id), summary_value: String(total),
-            author_email: row.added_by ? emails.get(row.added_by) || 'Email unavailable' : 'Not recorded'};
+            author_id: row.added_by || 'Not recorded'};
     });
 }
 
@@ -108,9 +104,9 @@ export async function getReturnOrderLines(orderId: string) {
     return data;
 }
 
-export async function saveStockDocument(entity: Entity, parent: Record<string, string>, lines: DocumentLineInput[]) {
-    const {data, error} = await supabase.rpc('create_stock_document', {p_entity: entity, p_parent: parent, p_lines: lines});
-    if (error) throw error;
-    if (!data) throw new Error('The document could not be saved. Please try again.');
-    return data;
+// Creation is intentionally paused until order/purchase/return workflows are redesigned.
+export async function saveStockDocument(entity: Entity, _parent: Record<string, string>, _lines: DocumentLineInput[]): Promise<string> {
+    void _parent;
+    void _lines;
+    throw new Error(`Creating ${entityInfo[entity].title.toLowerCase()} is paused pending workflow review.`);
 }
