@@ -1,1 +1,0 @@
-import{t as e}from"./itemCollection-C0PEU2b0.js";var t=e;export{t as component};
