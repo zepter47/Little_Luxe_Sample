@@ -108,7 +108,8 @@ export type Database = {
           added_by: string | null
           added_on: string | null
           image_path: string | null
-          is_active: boolean | null
+          is_active: boolean
+          is_stocked: boolean | null
           item_category_id: string | null
           item_id: string
           item_name: string
@@ -124,7 +125,8 @@ export type Database = {
           added_by?: string | null
           added_on?: string | null
           image_path?: string | null
-          is_active?: boolean | null
+          is_active?: boolean
+          is_stocked?: boolean | null
           item_category_id?: string | null
           item_id?: string
           item_name: string
@@ -140,7 +142,8 @@ export type Database = {
           added_by?: string | null
           added_on?: string | null
           image_path?: string | null
-          is_active?: boolean | null
+          is_active?: boolean
+          is_stocked?: boolean | null
           item_category_id?: string | null
           item_id?: string
           item_name?: string
@@ -670,6 +673,47 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      save_item: {
+        Args: {
+          p_category_id: string
+          p_image_path?: string
+          p_is_active?: boolean
+          p_item_id?: string
+          p_item_name: string
+          p_product_notes: string
+          p_sale_price: number
+          p_uom_id: string
+        }
+        Returns: string
+      }
+      get_admin_items_with_stock: {
+        Args: { p_include_inactive?: boolean }
+        Returns: {
+          image_path: string
+          is_active: boolean
+          is_stocked: boolean
+          item_category_id: string
+          item_id: string
+          item_name: string
+          product_notes: string
+          quantity_on_hand: number
+          sale_price: number
+          uom_id: string
+        }[]
+      }
+      get_storefront_items: {
+        Args: never
+        Returns: {
+          image_path: string
+          is_active: boolean
+          is_stocked: boolean
+          item_category_id: string
+          item_id: string
+          item_name: string
+          product_notes: string
+          sale_price: number
+        }[]
+      }
       cart_checkout: {
         Args: { p_items: Json; p_request_id: string; p_confirm: boolean }
         Returns: Json

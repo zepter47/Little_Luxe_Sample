@@ -1,10 +1,11 @@
 import { db } from '../../services/db/database';
 import { requireUser } from '../auth/auth';
-import type { item } from '../items/item.types';
+import type { CartProduct } from '../items/item.types';
 import type { CartItem } from './cart.types';
 
-export async function addToCart(product: item) {
+export async function addToCart(product: CartProduct) {
   const userId = requireUser();
+  if (!product.is_active || !product.is_stocked) throw new Error('This product is unavailable.');
   return db.transaction('rw', db.cartItems, async () => {
     const key: [string, string] = [userId, product.item_id];
     if (await db.cartItems.get(key)) return false;

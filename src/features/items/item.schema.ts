@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const itemSchema = z.object({
+    is_active: z.boolean(),
     item_name: z.string().trim().min(1, "Enter an item name"),
     sale_price: z.number().min(0, "Price cannot be negative"),
     item_category_id: z.string(),

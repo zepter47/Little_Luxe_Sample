@@ -2,10 +2,10 @@ import LabeledTextField from "../../../components/forms/LabeledTextField";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Alert, Box, Button, MenuItem, Stack, Typography } from "@mui/material";
+import { Alert, Box, Button, Checkbox, FormControlLabel, MenuItem, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { itemSchema } from "../item.schema";
-import { itemKeys, type item, type itemFormData } from "../item.types";
+import { itemKeys, type AdminItem, type itemFormData } from "../item.types";
 import { getItemImagesQueryOption, saveItemMutationOption } from "../item.query";
 import type { category } from "../../Categories/category.types";
 import type { Unit } from "../../units/unit.query";
@@ -22,7 +22,7 @@ function SelectedImage({file}: {file: File}) {
 }
 
 export default function ItemForm({item, categories, units, onSaved, onCancel}: {
-    item?: item; categories: category[]; units: Unit[]; onSaved: (warning?: string) => void; onCancel: () => void;
+    item?: AdminItem; categories: category[]; units: Unit[]; onSaved: (warning?: string) => void; onCancel: () => void;
 }) {
     const queryClient = useQueryClient();
     const mutation = useMutation(saveItemMutationOption());
@@ -37,7 +37,7 @@ export default function ItemForm({item, categories, units, onSaved, onCancel}: {
     const existingImages = useQuery({...getItemImagesQueryOption(savedId || ""), enabled: !!savedId});
     const {control, handleSubmit, formState: {isSubmitting}} = useForm<itemFormData>({
         resolver: zodResolver(itemSchema),
-        defaultValues: {item_name: item?.item_name || "",
+        defaultValues: {is_active: item?.is_active ?? true, item_name: item?.item_name || "",
             sale_price: item?.sale_price || 0, item_category_id: item?.item_category_id || "",
             product_notes: item?.product_notes || "", uom_id: item?.uom_id || ""},
     });
@@ -56,18 +56,20 @@ export default function ItemForm({item, categories, units, onSaved, onCancel}: {
         let cleanupWarning = warning || undefined;
         setImageError("");
         try {
-            const saved = await mutation.mutateAsync({...data, item_id: savedId,
-                item_category_id: data.item_category_id || null});
-            setSavedId(saved.item_id);
-            currentId = saved.item_id;
+            const itemId = await mutation.mutateAsync({p_item_id: savedId, p_item_name: data.item_name,
+                p_sale_price: data.sale_price, p_category_id: data.item_category_id || null,
+                p_uom_id: data.uom_id, p_product_notes: data.product_notes, p_is_active: data.is_active,
+                p_image_path: profilePath});
+            setSavedId(itemId);
+            currentId = itemId;
             if (profile) {
-                const result = await profileMutation.mutateAsync({itemId: saved.item_id, file: profile});
+                const result = await profileMutation.mutateAsync({itemId: itemId, file: profile});
                 setProfilePath(result.path);
                 setProfile(undefined);
                 if (result.warning) {cleanupWarning = result.warning; setWarning(result.warning);}
             }
             if (gallery.length) {
-                const result = await galleryMutation.mutateAsync({itemId: saved.item_id, files: gallery});
+                const result = await galleryMutation.mutateAsync({itemId: itemId, files: gallery});
                 setGallery(result.failed.map(failure => failure.file));
                 if (result.failed.length) {
                     setImageError(`Item saved. Retry failed images: ${result.failed.map(failure => `${failure.file.name}: ${failure.message}`).join("; ")}`);
@@ -106,6 +108,9 @@ export default function ItemForm({item, categories, units, onSaved, onCancel}: {
                     <MenuItem value="" disabled>Select a unit</MenuItem>
                     {units.map(unit => <MenuItem key={unit.uom_id} value={unit.uom_id}>{unit.uom_name}</MenuItem>)}
                 </LabeledTextField>} />
+            <Controller name="is_active" control={control} render={({field}) =>
+                <FormControlLabel label="Active product (visible in storefront)" control={<Checkbox checked={field.value}
+                    onChange={(_, checked) => field.onChange(checked)} />} />} />
             <Controller name="product_notes" control={control} render={({field: {ref, ...field}}) =>
                 <LabeledTextField {...field} inputRef={ref} label="Description" multiline minRows={3} fullWidth />} />
             <Typography variant="subtitle1">Profile picture</Typography>

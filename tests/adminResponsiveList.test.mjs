@@ -45,7 +45,7 @@ test('shared search and numeric sorting preserve the source dataset', () => {
 });
 const props = {
     items: Array.from({length: 12}, (_, index) => ({item_id: `id-${index}`, item_name:`Item ${index}`, sale_price: 25,
-        item_category_id:'category', uom_id:'unit', image_path:'https://example.test/product.jpg'})),
+        quantity_on_hand: index === 0 ? 8 : 0, is_active: index !== 1, item_category_id:'category', uom_id:'unit', image_path:'https://example.test/product.jpg'})),
     categories:[{item_category_id:'category', category_name:'Accessories'}],
     units:[{uom_id:'unit', uom_name:'Piece'}], onEdit: () => {},
 };
@@ -58,6 +58,9 @@ test('compact items mount only paginated image-free cards with resolved labels a
     assert.match(html, /Piece/);
     assert.match(html, /aria-label="Edit Item 0"/);
     assert.match(html, /25\.00/);
+    assert.match(html, /Quantity on hand: 8/);
+    assert.match(html, /Quantity on hand: 0/);
+    assert.match(html, /Inactive/);
 });
 test('wide items mount only the grid', () => {
     const Component = loader(false)(path.join(root, 'src/features/admin/components/AdminItemList.tsx')).default;

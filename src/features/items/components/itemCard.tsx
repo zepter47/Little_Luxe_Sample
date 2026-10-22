@@ -3,9 +3,9 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import AddToCartButton from "../../cart/AddToCartButton";
 import { getCartImage } from "../../cart/image";
-import type { item } from "../item.types";
+import type { StorefrontItem } from "../item.types";
 
-export default function ItemCard({item, category}: {item: item; category?: string}) {
+export default function ItemCard({item, category}: {item: StorefrontItem; category?: string}) {
     const [expanded, setExpanded] = useState(false);
     const [failedImage, setFailedImage] = useState<string | null>(null);
     return <Card variant="outlined" sx={{borderRadius: 4, overflow: "hidden", height: "100%"}}>
@@ -23,6 +23,7 @@ export default function ItemCard({item, category}: {item: item; category?: strin
         </Box>
         </CardActionArea>
         <CardContent>
+            {!item.is_stocked && <Chip label="Out of stock" size="small" color="warning" sx={{mb: 1}} />}
             {category && <Chip label={category} size="small" sx={{mb: 1, bgcolor: "#f5eee9"}} />}
             <Button onClick={() => setExpanded(!expanded)} aria-expanded={expanded} sx={{textTransform: "none", p: 0, textAlign: "left"}}><Typography variant="h6" component="h3">{item.item_name}</Typography></Button>
             <Collapse in={expanded}><Box sx={{my: 2}}><Typography color="text.secondary" sx={{mb: 2, whiteSpace: "pre-wrap"}}>{item.product_notes || "A little luxury for every day."}</Typography><AddToCartButton product={item} /><Box sx={{mt: 2}}><Link to="/products/$productId" params={{productId: item.item_id}}>View full gallery</Link></Box></Box></Collapse>
