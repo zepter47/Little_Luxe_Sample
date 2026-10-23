@@ -1,1 +1,0 @@
-import{t as e}from"./itemCollection-CV2kaOvo.js";var t=e;export{t as component};
