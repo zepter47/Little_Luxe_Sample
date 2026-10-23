@@ -56,19 +56,19 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/features/purchases/pu
 }});
 const {purchaseSchema} = purchaseModule;
 const purchaseDraft = () => ({invoice_number: ' INV-1 ', supplier_id: '', purchase_notes: '',
-    document_date: '2026-10-01', lines: [{item_id: '11111111-1111-4111-8111-111111111111',
+    lines: [{item_id: '11111111-1111-4111-8111-111111111111',
         quantity: '2', unit_price: '12.50', batch_number: ' B1 ', expiry_date: ''}]});
 
-test('purchase validation keeps optional supplier/date fields and normalizes invoice/batch', () => {
+test('purchase validation keeps optional supplier and needs no client date and normalizes invoice/batch', () => {
     const parsed = purchaseSchema.parse(purchaseDraft());
     assert.equal(parsed.invoice_number, 'INV-1');
     assert.equal(parsed.supplier_id, '');
-    assert.equal(parsed.document_date, '2026-10-01');
+    assert.equal('document_date' in parsed, false);
     assert.equal(parsed.lines[0].batch_number, 'B1');
 });
 
 test('purchase validation rejects missing and malformed inputs before mutation', () => {
-    for (const patch of [{invoice_number: ' '}, {supplier_id: 'bad-id'}, {document_date: '2026-02-30'}, {lines: []}]) {
+    for (const patch of [{invoice_number: ' '}, {supplier_id: 'bad-id'}, {lines: []}]) {
         assert.equal(purchaseSchema.safeParse({...purchaseDraft(), ...patch}).success, false);
     }
     for (const patch of [{item_id: ''}, {quantity: '0'}, {quantity: '1.5'}, {quantity: '2147483648'},
@@ -78,4 +78,22 @@ test('purchase validation rejects missing and malformed inputs before mutation',
         draft.lines[0] = {...draft.lines[0], ...patch};
         assert.equal(purchaseSchema.safeParse(draft).success, false, JSON.stringify(patch));
     }
+});
+
+
+test('purchase RPC excludes client audit timestamps even if supplied at runtime', async () => {
+    const apiModule = {};
+    let sent;
+    vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/features/purchases/purchase.api.ts', 'utf8'), {
+        compilerOptions: {module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022},
+    }).outputText, {exports: apiModule, require: name => {
+        assert.equal(name, '../../lib/supabase');
+        return {supabase: {rpc: async (name, payload) => {sent = {name, payload}; return {data: 'purchase-id', error: null};}}};
+    }});
+    assert.equal(await apiModule.createPurchaseAsync({purchase: {invoice_number: 'INV-1',
+        supplier_id: null, purchase_notes: null, added_on: '2000-01-01T00:00:00Z'}, lines: []}), 'purchase-id');
+    assert.equal(sent.name, 'create_purchase');
+    assert.equal('p_added_on' in sent.payload, false);
+    assert.equal('added_on' in sent.payload, false);
+    assert.deepEqual(Object.keys(sent.payload).sort(), ['p_invoice_number', 'p_items_json', 'p_purchase_notes', 'p_supplier_id']);
 });

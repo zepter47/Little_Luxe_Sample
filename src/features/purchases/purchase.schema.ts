@@ -4,7 +4,6 @@ export const purchaseSchema = z.object({
     invoice_number: z.string().trim().min(1, 'Please enter an invoice number.'),
     supplier_id: z.union([z.literal(''), z.uuid('Please select a valid supplier.')]),
     purchase_notes: z.string().trim(),
-    document_date: z.iso.date('Select a valid document date.'),
     lines: z.array(z.object({
         item_id: z.uuid('Select an item.'),
         quantity: z.string().regex(/^\d+$/, 'Quantity must be a positive whole number.')

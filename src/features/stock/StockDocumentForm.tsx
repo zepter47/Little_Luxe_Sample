@@ -30,13 +30,13 @@ export default function StockDocumentForm({entity, fields, lookups, onClose, onS
     const purchaseForm = useForm<PurchaseFormData>({
         resolver: zodResolver(purchaseSchema),
         defaultValues: {invoice_number: '', supplier_id: '', purchase_notes: '',
-            document_date: legacyParent.document_date, lines: [newDocumentLine()]},
+            lines: [newDocumentLine()]},
     });
     const purchaseArray = useFieldArray({control: purchaseForm.control, name: 'lines'});
     const draft = useWatch({control: purchaseForm.control});
     const parent: Record<string, string> = isPurchase ? {
         invoice_number: draft.invoice_number || '', supplier_id: draft.supplier_id || '',
-        purchase_notes: draft.purchase_notes || '', document_date: draft.document_date || '',
+        purchase_notes: draft.purchase_notes || '',
     } : legacyParent;
     const lines: DocumentLine[] = isPurchase ? purchaseArray.fields.map((field, index) => ({
         ...field, ...draft.lines?.[index], key: field.id, order_details_id: '',
@@ -45,7 +45,7 @@ export default function StockDocumentForm({entity, fields, lookups, onClose, onS
     function setParent(update: (previous: Record<string, string>) => Record<string, string>) {
         if (!isPurchase) {setLegacyParent(update); return;}
         const values = update(parent);
-        for (const name of ['invoice_number', 'supplier_id', 'purchase_notes', 'document_date'] as const) {
+        for (const name of ['invoice_number', 'supplier_id', 'purchase_notes'] as const) {
             if (values[name] !== parent[name]) purchaseForm.setValue(name, values[name], {shouldDirty: true});
         }
     }
@@ -86,8 +86,7 @@ export default function StockDocumentForm({entity, fields, lookups, onClose, onS
         try {
             const id = await purchaseMutation.mutateAsync({
                 purchase: {invoice_number: data.invoice_number, supplier_id: data.supplier_id || null,
-                    purchase_notes: data.purchase_notes || null,
-                    added_on: new Date(`${data.document_date}T00:00:00`).toISOString()},
+                    purchase_notes: data.purchase_notes || null},
                 lines: data.lines.map(line => ({item_id: line.item_id, quantity_bought: Number(line.quantity),
                     cost_price: Number(line.unit_price), batch_number: line.batch_number || null,
                     expiry_date: line.expiry_date || null})),
@@ -96,7 +95,7 @@ export default function StockDocumentForm({entity, fields, lookups, onClose, onS
         } catch { /* Retain the complete purchase draft and display the mutation error. */ }
     }
     function invalidPurchase(errors: FieldErrors<PurchaseFormData>) {
-        const header = errors.invoice_number || errors.supplier_id || errors.document_date;
+        const header = errors.invoice_number || errors.supplier_id;
         if (header?.message) {setValidation(header.message); return;}
         if (Array.isArray(errors.lines)) {
             for (const [index, error] of errors.lines.entries()) {
@@ -140,8 +139,8 @@ export default function StockDocumentForm({entity, fields, lookups, onClose, onS
                     <Paper variant="outlined" sx={{p: {xs: 2, sm: 3}, borderRadius: 3, borderColor: '#e9dfd7'}}>
                         <Typography component="h3" sx={{fontWeight: 600, mb: 2}}>01 · {entity === 'purchase' ? 'Purchase' : isReturn ? 'Return' : 'Order'} information</Typography>
                         <Box sx={fieldGrid}>
-                            <LabeledTextField label="Date" type="date" required fullWidth disabled={pending} value={parent.document_date}
-                                onChange={event => setParent(previous => ({...previous, document_date: event.target.value}))} />
+                            {!isPurchase && <LabeledTextField label="Date" type="date" required fullWidth disabled={pending} value={parent.document_date}
+                                onChange={event => setParent(previous => ({...previous, document_date: event.target.value}))} />}
                             {fields.map(field => <Box key={field.name} sx={field.multiline ? {gridColumn: '1 / -1'} : undefined}>
                                 <LabeledTextField label={field.label} required={field.required} fullWidth disabled={pending} value={parent[field.name] || ''}
                                     multiline={field.multiline} minRows={field.multiline ? 2 : undefined} select={!!field.options}

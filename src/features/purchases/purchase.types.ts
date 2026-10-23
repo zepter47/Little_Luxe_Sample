@@ -6,7 +6,7 @@ export type newPurchase = TablesInsert<'purchase'>;
 export type newPurchaseDetail = TablesInsert<'purchase_details'>;
 export type PurchaseFormData = z.infer<typeof purchaseSchema>;
 export type CreatePurchaseInput = {
-    purchase: Pick<newPurchase, 'supplier_id' | 'invoice_number' | 'purchase_notes' | 'added_on'>;
+    purchase: Pick<newPurchase, 'supplier_id' | 'invoice_number' | 'purchase_notes'>;
     lines: Pick<newPurchaseDetail, 'item_id' | 'quantity_bought' | 'cost_price' | 'batch_number' | 'expiry_date'>[];
 };
 

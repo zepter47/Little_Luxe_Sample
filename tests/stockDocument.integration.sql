@@ -21,10 +21,10 @@ BEGIN
     v_purchase_id := public.create_purchase(' PURCHASE-REGRESSION ', jsonb_build_array(
         jsonb_build_object('item_id', i, 'quantity_bought', 2, 'cost_price', 10, 'batch_number', ' '),
         jsonb_build_object('item_id', i, 'quantity_bought', 3, 'cost_price', 20)
-    ), p_added_on => '2026-10-01T00:00:00+03:00');
+    ), p_added_on => '2000-01-01T00:00:00Z');
     IF NOT EXISTS (SELECT 1 FROM public.purchase p WHERE p.purchase_id = v_purchase_id
         AND invoice_number = 'PURCHASE-REGRESSION' AND added_by = auth.uid()
-        AND added_on = '2026-10-01T00:00:00+03:00'::TIMESTAMPTZ AND supplier_id IS NULL)
+        AND added_on = NOW() AND supplier_id IS NULL)
     THEN RAISE EXCEPTION 'Purchase header, date, optional supplier or audit failed.'; END IF;
     IF (SELECT COUNT(*) FROM public.purchase_details d WHERE d.purchase_id = v_purchase_id) <> 2
     THEN RAISE EXCEPTION 'Purchase detail count failed.'; END IF;
