@@ -15,9 +15,9 @@ function displayValue(field: recordField, value: string) {
     return field.options?.find(option => option.value === value)?.label || value;
 }
 
-export default function AdminRecordManager({title, singular, rows, fields, queryKey, onSave, notice, displayFields = fields, onSelect, onAdd}: {
+export default function AdminRecordManager({title, singular, rows, fields, queryKey, onSave, notice, displayFields = fields, onSelect, onAdd, readOnly = false}: {
     title: string; singular: string; rows: adminRecord[]; fields: recordField[];
-    queryKey: readonly string[]; onSave: (values: Record<string, string>, id?: string) => Promise<unknown>; notice?: string; displayFields?: recordField[]; onSelect?: (row: adminRecord) => void; onAdd?: () => void;
+    queryKey: readonly string[]; onSave: (values: Record<string, string>, id?: string) => Promise<unknown>; notice?: string; displayFields?: recordField[]; onSelect?: (row: adminRecord) => void; onAdd?: () => void; readOnly?: boolean;
 }) {
     const [editing, setEditing] = useState<adminRecord | null | undefined>(undefined);
     const [values, setValues] = useState<Record<string, string>>({});
@@ -54,12 +54,12 @@ export default function AdminRecordManager({title, singular, rows, fields, query
         valueGetter: (_, row) => field.type === "number" ? Number(row[field.name] || 0) : row[field.name],
         valueFormatter: value => displayValue(field, String(value ?? "")),
     }));
-    columns.push({field: "actions", headerName: "Actions", width: onSelect ? 170 : 100, sortable: false, filterable: false,
+    if (!readOnly) columns.push({field: "actions", headerName: "Actions", width: onSelect ? 170 : 100, sortable: false, filterable: false,
         renderCell: ({row}) => <><Button onClick={() => openForm(row)}>Edit</Button>{onSelect && <Button onClick={() => onSelect(row)}>Select</Button>}</>});
     return <Paper variant="outlined" sx={styles.panel}>
         <Box sx={styles.toolbar}>
             <Typography variant="h5" component="h2">{title}</Typography>
-            <Button variant="contained" onClick={() => onAdd ? onAdd() : openForm(null)}>Add {singular}</Button>
+            {!readOnly && <Button variant="contained" onClick={() => onAdd ? onAdd() : openForm(null)}>Add {singular}</Button>}
         </Box>
         {saved && <Alert severity="success" sx={{mb: 2}}>{singular} saved successfully.</Alert>}
         {notice && <Alert severity="info" sx={{mb: 2}}>{notice}</Alert>}
@@ -69,7 +69,7 @@ export default function AdminRecordManager({title, singular, rows, fields, query
             renderCard={row => <Paper component="article" variant="outlined" sx={styles.listCard}>
                 <Box sx={onSelect ? {...styles.cardHeading, flexDirection: "column", gap: 1} : styles.cardHeading}>
                     <Typography component="h3" sx={styles.cardTitle}>{displayFields[0].format && <Typography component="span" variant="caption" color="text.secondary" sx={{display: "block"}}>{displayFields[0].label}</Typography>}{displayValue(displayFields[0], row[displayFields[0].name])}</Typography>
-                    <Box sx={{display: "flex", flexShrink: 0, alignSelf: "flex-end"}}><Button sx={styles.cardEdit} onClick={() => openForm(row)} aria-label={`Edit ${row[displayFields[0].name]}`}>Edit</Button>{onSelect && <Button sx={styles.cardEdit} onClick={() => onSelect(row)}>Select</Button>}</Box>
+                    {!readOnly && <Box sx={{display: "flex", flexShrink: 0, alignSelf: "flex-end"}}><Button sx={styles.cardEdit} onClick={() => openForm(row)} aria-label={`Edit ${row[displayFields[0].name]}`}>Edit</Button>{onSelect && <Button sx={styles.cardEdit} onClick={() => onSelect(row)}>Select</Button>}</Box>}
                 </Box>
                 <Box component="dl" sx={{m: 0}}>
                     {displayFields.slice(1).map(field => {

@@ -1,15 +1,56 @@
-Stock Management uses the admin panel's `AdminRecordManager`, `AdminResponsiveList`, and `LabeledTextField`. Both management areas use `NavigationStrip` for a single horizontally scrollable row.
+# Purchase workflow and change report
 
-The route and primary navigation follow the existing staff/admin access rules. Supabase RLS remains authoritative for reads and writes. Parent records show author email through `stock_author_emails`, rather than exposing Auth admin APIs or privileged keys in the browser. The SQL migration is already applied to the connected project; its version matches Supabase migration history.
+Purchases use `create_purchase` independently of orders and returns. The existing stock-management dialog, labels, responsive layout, summary, optional supplier and selected document date are retained. Orders and returns remain paused as they were on `feature-branch`.
 
-Select opens details filtered by the selected parent ID. Save keeps that parent ID fixed, including when editing. Purchases display `invoice_number`; `purchase_id` remains the internal relationship key. Returns use `return_details`; bulk creation generates its IDs in the RPC, and the individual detail form generates IDs in the client because the table has no default. Quantities must be positive integers and prices nonnegative.
+## Repository working agreement
 
-React Query keeps each entity and parent detail list in separate cache entries. Errors retain form values for retry; successful writes invalidate the relevant list. New parent records use the authenticated user's ID for audit data. No service key or Auth admin access is used.
+Use `feature-branch` for this and future tasks. Obtain approval before creating new source or documentation files. Keep changes scoped to the requested behavior, provide original-versus-modified diffs and verification results, and do not push without the user's instruction.
 
-Add opens `StockDocumentForm`, with parent information once at the top and repeatable, editable item lines underneath. Every line has quantity, price (cost for purchases, sale for orders), batch and expiry fields, plus a calculated total. A summary shows total quantity and document value. The form uses full-screen cards on narrow screens and a wider document/summary layout on desktop.
+## What changed
 
-`create_stock_document` saves the parent and every child in one transaction, under the caller's existing RLS permissions (`SECURITY INVOKER`). At least one valid line is required. A failed child rolls back the whole document. A stable draft document UUID prevents duplicate parents if the same request is resubmitted. Errors preserve the whole draft. Parent-only saves are restricted to editing existing records.
+- `purchases/purchase.schema.ts`: Zod validation for the purchase header and every item line.
+- `purchases/purchase.types.ts`: inputs derived from generated `TablesInsert` types and the form schema.
+- `purchases/purchase.api.ts`: one `create_purchase` RPC; the browser does not write purchase lines or stock separately.
+- `purchases/purchase.query.ts`: dedicated TanStack mutation with automatic retry disabled. Success refreshes purchase records/details, lookup data, and item availability/inventory.
+- `StockDocumentForm.tsx`: purchases use React Hook Form, `useFieldArray` and the Zod resolver. Existing presentation is retained. Validation and server failures retain the entire draft. Other entities retain their previous form logic.
+- `StockManagement.tsx`: Add purchase opens the existing dialog. Purchase details are read-only until a transactional correction workflow exists. Orders and returns remain paused.
+- `adminRecordManager.tsx`: optional `readOnly` flag hides Add/Edit controls only when explicitly requested; existing consumers keep their behavior.
+- `stock.api.ts`: rejects independent purchase-detail writes; order/return paths are unchanged.
+- `database.types.ts`: adds the verified `create_purchase` signature without regenerating unrelated types.
+- `supabase/migrations/20261023211753_create_purchase.sql`: installs the function and stock identity index; its version matches the migration applied to the connected Supabase project `ektotdjoefpbzjygvgus` (dashboard name: Stridell_Games).
+- `tests/stockDocument.test.mjs`: adds purchase-schema regression cases.
+- `tests/stockDocument.integration.sql`: replaces obsolete combined-function tests with dedicated purchase transaction/RLS regression checks.
 
-Returns select items from the chosen original order; batch/expiry and displayed price come from that order line. Quantities within the draft cannot exceed that original line's sold quantity. Return value is calculated for display from original sale prices; no price column is invented in `return_details`.
+## Database behavior
 
-Run `npm test` for validation, totals and payload checks. `tests/stockDocument.integration.sql` verifies multi-line writes and complete rollback using the existing admin role and item; it rolls back all test data. Browser verification uses mocked Supabase requests so UI tests do not write business records.
+One call inserts one purchase header and all purchase details, then inserts or increments stock inside the same transaction. `jsonb_to_recordset` and a sequential loop retain the requested SQL structure. Invalid quantities, prices, item references or permissions roll back the whole operation.
+
+Stock identity is `(item_id, batch_number, expiry_date)` with `NULLS NOT DISTINCT`. Blank batch numbers become NULL. NULL matches NULL, not any arbitrary batch or expiry. A different batch or expiry creates a different stock row. The previous `(item_id, batch_number)` constraint was replaced because it prohibited different expiry dates for the same batch. The migration refuses duplicate normalized identities rather than silently merging data. Stock was empty when inspected and migrated.
+
+Matching stock receives a quantity-weighted average cost rounded to two decimals. Purchase details retain each invoice line's original cost. The selected Date is passed as `p_added_on`, preserving the form's existing conversion from local midnight; omission by an API caller defaults to NOW(). `added_by` always comes from `auth.uid()`.
+
+`SECURITY INVOKER` preserves existing table RLS and avoids duplicate `authorize()` calls. The new function is executable by authenticated users subject to those policies, not anonymous users. Execute access to the superseded `process_secure_purchase` was removed from application roles because it bypassed RLS and used the obsolete stock identity. Existing table policies and direct-write grants were retained; the RPC is not enforced as the exclusive write route for every external caller.
+
+There is no purchase request ID or server-side idempotency mechanism, as requested in the supplied discussion. Automatic retries are disabled and Save is disabled while pending. An explicit retry after an ambiguous network failure can still repeat a completed purchase.
+
+## Verification completed
+
+- `npm test`, `npm run lint`, and `npm run build` pass. The existing bundle-size advisory remains.
+- The purchase SQL regression script passes on Supabase, including multi-line inserts, weighted averages, NULL/partial-NULL matching, separate expiry dates, invalid inputs, rollback, staff/customer RLS and RPC grants. All test fixtures are rolled back.
+- Existing `supabase/tests/item_inventory.sql` also passes with all fixtures rolled back.
+- Playwright checks pass at desktop (1440px) and mobile (390px) widths: dialog behavior, input focus, validation, add/remove totals, retained draft after a server error, explicit retry, exact purchase payload, read-only purchase details and the existing order-creation pause. All browser API calls are mocked.
+- Supabase security advisors show no finding for the new purchase function. Pre-existing findings on other objects remain outside this change.
+
+## Compare original and modified files
+
+Original `feature-branch` baseline: `52dab11800cd57fa63c5805a088074e419987dee`.
+
+Before a local commit, use the source-control Changes view for modified files and inspect the five approved new files. After the local commit, these commands show every addition and deletion, including new files:
+
+```sh
+git diff --stat 52dab11800cd57fa63c5805a088074e419987dee HEAD
+git diff 52dab11800cd57fa63c5805a088074e419987dee HEAD
+git difftool 52dab11800cd57fa63c5805a088074e419987dee HEAD -- src/features/stock/StockDocumentForm.tsx
+```
+
+No remote commit or push is part of this work.

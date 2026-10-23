@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {webcrypto} from 'node:crypto';
 import ts from 'typescript';
+import * as zod from 'zod';
 
 const exports = {};
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/features/stock/stockDocument.model.ts', 'utf8'), {
@@ -43,4 +44,38 @@ test('save payload includes all lines and excludes temporary UI keys', () => {
     assert.deepEqual(payload[0], {item_id: 'item-a', order_details_id: null, quantity: 3, unit_price: 0.1, batch_number: 'B-1', expiry_date: '2027-01-01'});
     assert.equal(payload[1].batch_number, null);
     assert.equal(payload[1].expiry_date, null);
+});
+
+// Purchases follow the application's RHF/Zod convention instead of the generic document validator.
+const purchaseModule = {};
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/features/purchases/purchase.schema.ts', 'utf8'), {
+    compilerOptions: {module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022},
+}).outputText, {exports: purchaseModule, require: name => {
+    if (name === 'zod') return zod;
+    throw new Error(`Unexpected dependency: ${name}`);
+}});
+const {purchaseSchema} = purchaseModule;
+const purchaseDraft = () => ({invoice_number: ' INV-1 ', supplier_id: '', purchase_notes: '',
+    document_date: '2026-10-01', lines: [{item_id: '11111111-1111-4111-8111-111111111111',
+        quantity: '2', unit_price: '12.50', batch_number: ' B1 ', expiry_date: ''}]});
+
+test('purchase validation keeps optional supplier/date fields and normalizes invoice/batch', () => {
+    const parsed = purchaseSchema.parse(purchaseDraft());
+    assert.equal(parsed.invoice_number, 'INV-1');
+    assert.equal(parsed.supplier_id, '');
+    assert.equal(parsed.document_date, '2026-10-01');
+    assert.equal(parsed.lines[0].batch_number, 'B1');
+});
+
+test('purchase validation rejects missing and malformed inputs before mutation', () => {
+    for (const patch of [{invoice_number: ' '}, {supplier_id: 'bad-id'}, {document_date: '2026-02-30'}, {lines: []}]) {
+        assert.equal(purchaseSchema.safeParse({...purchaseDraft(), ...patch}).success, false);
+    }
+    for (const patch of [{item_id: ''}, {quantity: '0'}, {quantity: '1.5'}, {quantity: '2147483648'},
+        {unit_price: ''}, {unit_price: '-1'}, {unit_price: '1.234'}, {unit_price: 'Infinity'},
+        {unit_price: '10000000000.00'}, {expiry_date: '2027-02-30'}]) {
+        const draft = purchaseDraft();
+        draft.lines[0] = {...draft.lines[0], ...patch};
+        assert.equal(purchaseSchema.safeParse(draft).success, false, JSON.stringify(patch));
+    }
 });

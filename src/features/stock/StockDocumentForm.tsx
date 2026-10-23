@@ -1,4 +1,9 @@
 import { useState } from 'react';
+import { useFieldArray, useForm, useWatch, type FieldErrors } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { purchaseSchema } from '../purchases/purchase.schema';
+import type { PurchaseFormData } from '../purchases/purchase.types';
+import { createPurchaseMutationOption } from '../purchases/purchase.query';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Alert, Box, Button, Chip, Dialog, DialogContent, DialogTitle, Divider, IconButton, MenuItem, Paper, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import LabeledTextField from '../../components/forms/LabeledTextField';
@@ -16,20 +21,54 @@ export default function StockDocumentForm({entity, fields, lookups, onClose, onS
     const isReturn = entity === 'item_return';
     const compact = useMediaQuery(useTheme().breakpoints.down('sm'));
     const [documentId] = useState(() => crypto.randomUUID());
-    const [parent, setParent] = useState<Record<string, string>>(() => ({...Object.fromEntries(fields.map(field => [field.name, field.defaultValue || ''])),
+    const [legacyParent, setLegacyParent] = useState<Record<string, string>>(() => ({...Object.fromEntries(fields.map(field => [field.name, field.defaultValue || ''])),
         document_date: new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)}));
-    const [lines, setLines] = useState<DocumentLine[]>(() => [newDocumentLine()]);
+    const [legacyLines, setLegacyLines] = useState<DocumentLine[]>(() => [newDocumentLine()]);
     const [validation, setValidation] = useState('');
     const queryClient = useQueryClient();
+    const isPurchase = entity === 'purchase';
+    const purchaseForm = useForm<PurchaseFormData>({
+        resolver: zodResolver(purchaseSchema),
+        defaultValues: {invoice_number: '', supplier_id: '', purchase_notes: '',
+            document_date: legacyParent.document_date, lines: [newDocumentLine()]},
+    });
+    const purchaseArray = useFieldArray({control: purchaseForm.control, name: 'lines'});
+    const draft = useWatch({control: purchaseForm.control});
+    const parent: Record<string, string> = isPurchase ? {
+        invoice_number: draft.invoice_number || '', supplier_id: draft.supplier_id || '',
+        purchase_notes: draft.purchase_notes || '', document_date: draft.document_date || '',
+    } : legacyParent;
+    const lines: DocumentLine[] = isPurchase ? purchaseArray.fields.map((field, index) => ({
+        ...field, ...draft.lines?.[index], key: field.id, order_details_id: '',
+    })) : legacyLines;
+    const purchaseMutation = useMutation(createPurchaseMutationOption(queryClient));
+    function setParent(update: (previous: Record<string, string>) => Record<string, string>) {
+        if (!isPurchase) {setLegacyParent(update); return;}
+        const values = update(parent);
+        for (const name of ['invoice_number', 'supplier_id', 'purchase_notes', 'document_date'] as const) {
+            if (values[name] !== parent[name]) purchaseForm.setValue(name, values[name], {shouldDirty: true});
+        }
+    }
+    function setLines(update: DocumentLine[] | ((previous: DocumentLine[]) => DocumentLine[])) {
+        if (!isPurchase) {setLegacyLines(update); return;}
+        const next = typeof update === 'function' ? update(lines) : update;
+        // Preserve field-array IDs and focus when appending/removing a single line.
+        if (next.length > lines.length) purchaseArray.append(next[next.length - 1]);
+        else if (next.length < lines.length) purchaseArray.remove(lines.findIndex(line => !next.some(other => other.key === line.key)));
+        else purchaseArray.replace(next);
+    }
     const source = useQuery({queryKey: ['return-order-lines', parent.order_id], queryFn: () => getReturnOrderLines(parent.order_id), enabled: isReturn && !!parent.order_id});
     const mutation = useMutation({mutationFn: () => saveStockDocument(entity,
         {...parent, document_id: documentId, added_on: new Date(`${parent.document_date}T00:00:00`).toISOString()}, documentLinesPayload(lines))});
-    const pending = mutation.isPending;
+    const pending = isPurchase ? purchaseMutation.isPending || purchaseForm.formState.isSubmitting : mutation.isPending;
     const total = lines.reduce((sum, line) => sum + lineTotal(line), 0);
     const units = lines.filter(line => line.item_id).reduce((sum, line) => sum + (Number(line.quantity) || 0), 0);
     const missingReturnPrice = isReturn && lines.some(line => line.item_id && !line.unit_price);
     function patchLine(key: string, patch: Partial<DocumentLine>) {
-        setLines(previous => previous.map(line => line.key === key ? {...line, ...patch} : line));
+        if (isPurchase) {
+            const index = lines.findIndex(line => line.key === key);
+            if (index >= 0) purchaseForm.setValue(`lines.${index}`, {...purchaseForm.getValues(`lines.${index}`), ...patch}, {shouldDirty: true});
+        } else setLegacyLines(previous => previous.map(line => line.key === key ? {...line, ...patch} : line));
         setValidation('');
     }
     function chooseItem(key: string, value: string) {
@@ -41,6 +80,31 @@ export default function StockDocumentForm({entity, fields, lookups, onClose, onS
             const item = lookups.items.find(row => row.item_id === value);
             patchLine(key, {item_id: value, ...(entity === 'order' ? {unit_price: String(item?.sale_price ?? '')} : {})});
         }
+    }
+    async function submitPurchase(data: PurchaseFormData) {
+        setValidation('');
+        try {
+            const id = await purchaseMutation.mutateAsync({
+                purchase: {invoice_number: data.invoice_number, supplier_id: data.supplier_id || null,
+                    purchase_notes: data.purchase_notes || null,
+                    added_on: new Date(`${data.document_date}T00:00:00`).toISOString()},
+                lines: data.lines.map(line => ({item_id: line.item_id, quantity_bought: Number(line.quantity),
+                    cost_price: Number(line.unit_price), batch_number: line.batch_number || null,
+                    expiry_date: line.expiry_date || null})),
+            });
+            onSaved(id);
+        } catch { /* Retain the complete purchase draft and display the mutation error. */ }
+    }
+    function invalidPurchase(errors: FieldErrors<PurchaseFormData>) {
+        const header = errors.invoice_number || errors.supplier_id || errors.document_date;
+        if (header?.message) {setValidation(header.message); return;}
+        if (Array.isArray(errors.lines)) {
+            for (const [index, error] of errors.lines.entries()) {
+                const issue = error?.item_id || error?.quantity || error?.unit_price || error?.batch_number || error?.expiry_date;
+                if (issue?.message) {setValidation(`Item ${index + 1}: ${issue.message}`); return;}
+            }
+        }
+        setValidation(errors.lines?.root?.message || errors.lines?.message || 'Check the purchase information and item lines.');
     }
     async function submit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -64,7 +128,7 @@ export default function StockDocumentForm({entity, fields, lookups, onClose, onS
     }
     return <Dialog open onClose={() => {if (!pending) onClose();}} fullWidth maxWidth="xl" fullScreen={compact}
         slotProps={{paper: {sx: {borderRadius: compact ? 0 : 4, bgcolor: '#fdfbf9'}}}}>
-        <Box component="form" onSubmit={submit} noValidate>
+        <Box component="form" onSubmit={isPurchase ? purchaseForm.handleSubmit(submitPurchase, invalidPurchase) : submit} noValidate>
             <DialogTitle component="div" sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, px: {xs: 2, sm: 3}}}>
                 <Box><Typography variant="overline" color="text.secondary">STOCK MANAGEMENT</Typography>
                     <Typography component="h2" sx={{fontFamily: 'Georgia, serif', fontSize: {xs: '1.75rem', sm: '2rem'}, color: '#49352b'}}>New {config.singular}</Typography></Box>
@@ -134,7 +198,7 @@ export default function StockDocumentForm({entity, fields, lookups, onClose, onS
                         </Paper>
                     </Box>
                     {validation && <Alert severity="error">{validation}</Alert>}
-                    {mutation.error && <Alert severity="error">{mutation.error.message}</Alert>}
+                    {(isPurchase ? purchaseMutation.error : mutation.error) && <Alert severity="error">{(isPurchase ? purchaseMutation.error : mutation.error)?.message}</Alert>}
                     <Box sx={{display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 1, pt: 2, borderTop: '1px solid #e9dfd7'}}>
                         <Button disabled={pending} onClick={onClose}>Cancel</Button>
                         <Button variant="contained" type="submit" disabled={pending} sx={{bgcolor: '#79543f', px: 4, '&:hover': {bgcolor: '#49352b'}}}>{pending ? 'Saving…' : `Save ${config.singular}`}</Button>

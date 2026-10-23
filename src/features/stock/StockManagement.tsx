@@ -72,7 +72,7 @@ function StockEntity({entity}: {entity: Entity}) {
                 <Typography color="text.secondary">{selected.author_id} · {selected[config.notes] || 'No notes'}</Typography>
             </Box>
             <AdminRecordManager key={`${entity}-${selected.id}`} title={`${config.title === 'Item returns' ? 'Return' : config.title.slice(0, -1)} details`} singular="detail"
-                rows={details.data || []} fields={detailFields} queryKey={['stock-details', entity, selected.id]}
+                rows={details.data || []} fields={detailFields} queryKey={['stock-details', entity, selected.id]} readOnly={entity === 'purchase'}
                 onSave={async (values, id) => {
                     const result = await saveStockDetail(entity, selected.id, values, id);
                     await queryClient.invalidateQueries({queryKey: ['stock', entity]});
@@ -81,13 +81,13 @@ function StockEntity({entity}: {entity: Entity}) {
         </Box>;
     }
     return <Box>
-        {creationPaused && <Alert severity="info" sx={{mb: 2}}>Creating orders, purchases, and returns is paused pending workflow review.</Alert>}
+        {creationPaused && <Alert severity="info" sx={{mb: 2}}>Creating orders and returns is paused pending workflow review.</Alert>}
         {created && <Alert severity="success" sx={{mb: 2}}>{config.singular[0].toUpperCase() + config.singular.slice(1)} and all item lines saved successfully.</Alert>}
         <AdminRecordManager title={config.title} singular={config.singular} rows={rows} fields={fields} displayFields={displayFields}
         queryKey={['stock', entity]} onSave={async (values, id) => {
             const result = await saveStockRecord(entity, values, id);
             await queryClient.invalidateQueries({queryKey: ['stock-options']});
             return result;
-        }} onSelect={setSelected} onAdd={() => setCreationPaused(true)} />
+        }} onSelect={setSelected} onAdd={() => {if (entity === 'purchase') {setCreated(false); setCreating(true);} else setCreationPaused(true);}} />
     </Box>;
 }

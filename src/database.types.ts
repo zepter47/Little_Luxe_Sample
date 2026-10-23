@@ -673,6 +673,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_purchase: {
+        Args: {
+          p_invoice_number: string
+          p_items_json: Json
+          p_supplier_id?: string
+          p_purchase_notes?: string
+          p_added_on?: string
+        }
+        Returns: string
+      }
       save_item: {
         Args: {
           p_category_id: string

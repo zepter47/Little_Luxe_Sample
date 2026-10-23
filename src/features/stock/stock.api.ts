@@ -74,6 +74,7 @@ export async function saveStockRecord(entity: Entity, values: Record<string, str
 }
 
 export async function saveStockDetail(entity: Entity, parentId: string, values: Record<string, string>, id?: string) {
+    if (entity === 'purchase') throw new Error('Purchase details are saved together with stock through create_purchase.');
     const config = entityInfo[entity];
     const quantity = Number(values[config.quantity]);
     if (!Number.isInteger(quantity) || quantity <= 0) throw new Error('Quantity must be a positive whole number.');
@@ -84,9 +85,6 @@ export async function saveStockDetail(entity: Entity, parentId: string, values: 
     if (entity === 'order') {
         const payload = {...common, order_id: parentId, quantity_sold: quantity, sale_price: price};
         result = await (id ? supabase.from('order_details').update(payload).eq('order_details_id', id).eq('order_id', parentId) : supabase.from('order_details').insert(payload)).select('order_details_id').single();
-    } else if (entity === 'purchase') {
-        const payload = {...common, purchase_id: parentId, quantity_bought: quantity, cost_price: price};
-        result = await (id ? supabase.from('purchase_details').update(payload).eq('purchase_details_id', id).eq('purchase_id', parentId) : supabase.from('purchase_details').insert(payload)).select('purchase_details_id').single();
     } else {
         // return_details_id has no database default.
         const payload = {...common, return_id: parentId, quantity_returned: quantity};
