@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      customer: {
+        Row: CustomerRow
+        Insert: Omit<CustomerRow, 'customer_id' | 'added_on' | 'updated_by' | 'updated_on'> & {customer_id?: string; added_on?: string}
+        Update: Partial<CustomerRow>
+        Relationships: []
+      }
+      stock_reservation: {
+        Row: {reservation_id: string; order_details_id: string; stock_id: string; quantity_reserved: number; reservation_status: string; created_at: string}
+        Insert: {order_details_id: string; stock_id: string; quantity_reserved: number; reservation_id?: string; reservation_status?: string; created_at?: string}
+        Update: {reservation_status?: string}
+        Relationships: []
+      }
+      order_status_history: {
+        Row: {history_id: number; order_id: string; previous_status: Database['public']['Enums']['order_status'] | null; new_status: Database['public']['Enums']['order_status']; changed_by: string | null; actor_type: string; change_source: string; reason_code: string; reason_notes: string | null; changed_on: string}
+        Insert: never
+        Update: never
+        Relationships: []
+      }
       cart: {
         Row: {
           batch_number: string | null
@@ -277,6 +295,10 @@ export type Database = {
       }
       order: {
         Row: {
+          customer_id: string
+          order_origin: 'online' | 'staff'
+          expected_expiry_date: string
+          request_id: string
           added_by: string | null
           added_on: string | null
           is_active: boolean | null
@@ -287,6 +309,10 @@ export type Database = {
           updated_on: string | null
         }
         Insert: {
+          customer_id: string
+          order_origin: 'online' | 'staff'
+          expected_expiry_date: string
+          request_id: string
           added_by?: string | null
           added_on?: string | null
           is_active?: boolean | null
@@ -297,6 +323,10 @@ export type Database = {
           updated_on?: string | null
         }
         Update: {
+          customer_id?: string
+          order_origin?: 'online' | 'staff'
+          expected_expiry_date?: string
+          request_id?: string
           added_by?: string | null
           added_on?: string | null
           is_active?: boolean | null
@@ -501,6 +531,7 @@ export type Database = {
       }
       stock: {
         Row: {
+          quantity_reserved: number
           batch_number: string | null
           cost_price: number
           expiry_date: string | null
@@ -509,6 +540,7 @@ export type Database = {
           stock_id: string
         }
         Insert: {
+          quantity_reserved?: number
           batch_number?: string | null
           cost_price: number
           expiry_date?: string | null
@@ -517,6 +549,7 @@ export type Database = {
           stock_id: string
         }
         Update: {
+          quantity_reserved?: number
           batch_number?: string | null
           cost_price?: number
           expiry_date?: string | null
@@ -673,6 +706,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_online_order: {Args: {p_items_json: Json; p_request_id: string; p_order_notes?: string}; Returns: string}
+      create_staff_order: {Args: {p_customer_id: string; p_items_json: Json; p_request_id: string; p_order_notes?: string}; Returns: string}
+      update_order_status: {Args: {p_order_id: string; p_new_status: Database['public']['Enums']['order_status']; p_reason?: string}; Returns: Json}
+      get_order_timeline: {Args: {p_order_id: string}; Returns: {history_id: number; previous_status: Database['public']['Enums']['order_status'] | null; new_status: Database['public']['Enums']['order_status']; changed_on: string}[]}
+      save_customer: {Args: {p_first_name: string; p_last_name: string; p_email?: string; p_phone_number?: string; p_address?: string; p_customer_notes?: string; p_customer_id?: string; p_is_active?: boolean}; Returns: string}
       create_purchase: {
         Args: {
           p_invoice_number: string
@@ -723,10 +761,6 @@ export type Database = {
           product_notes: string
           sale_price: number
         }[]
-      }
-      cart_checkout: {
-        Args: { p_items: Json; p_request_id: string; p_confirm: boolean }
-        Returns: Json
       }
 
       add_item_with_category_name: {
@@ -1018,3 +1052,6 @@ export const Constants = {
     },
   },
 } as const
+
+
+export type CustomerRow = {customer_id: string; first_name: string; last_name: string; email: string | null; phone_number: string | null; address: string | null; customer_notes: string | null; is_active: boolean; added_by: string; added_on: string; updated_by: string | null; updated_on: string | null}

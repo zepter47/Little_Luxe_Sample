@@ -14,11 +14,13 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as CategoryRouteImport } from './routes/category'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as StockManagementRouteImport } from './routes/stock-management'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminCategoriesRouteImport } from './routes/admin/categories'
+import { Route as AdminCustomersRouteImport } from './routes/admin/customers'
 import { Route as AdminSuppliersRouteImport } from './routes/admin/suppliers'
 import { Route as AdminUnitsRouteImport } from './routes/admin/units'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
@@ -50,6 +52,11 @@ const CategoryRoute = CategoryRouteImport.update({
   path: '/category',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -73,6 +80,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
   id: '/categories',
   path: '/categories',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCustomersRoute = AdminCustomersRouteImport.update({
+  id: '/customers',
+  path: '/customers',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminSuppliersRoute = AdminSuppliersRouteImport.update({
@@ -107,10 +119,12 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/cart': typeof CartRoute
   '/category': typeof CategoryRoute
+  '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
   '/stock-management': typeof StockManagementRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/customers': typeof AdminCustomersRoute
   '/admin/suppliers': typeof AdminSuppliersRoute
   '/admin/units': typeof AdminUnitsRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -123,10 +137,12 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/cart': typeof CartRoute
   '/category': typeof CategoryRoute
+  '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
   '/stock-management': typeof StockManagementRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/customers': typeof AdminCustomersRoute
   '/admin/suppliers': typeof AdminSuppliersRoute
   '/admin/units': typeof AdminUnitsRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -141,10 +157,12 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/cart': typeof CartRoute
   '/category': typeof CategoryRoute
+  '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
   '/stock-management': typeof StockManagementRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/customers': typeof AdminCustomersRoute
   '/admin/suppliers': typeof AdminSuppliersRoute
   '/admin/units': typeof AdminUnitsRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -160,10 +178,12 @@ export interface FileRouteTypes {
     | '/admin'
     | '/cart'
     | '/category'
+    | '/dashboard'
     | '/login'
     | '/profile'
     | '/stock-management'
     | '/admin/categories'
+    | '/admin/customers'
     | '/admin/suppliers'
     | '/admin/units'
     | '/auth/callback'
@@ -176,10 +196,12 @@ export interface FileRouteTypes {
     | '/about'
     | '/cart'
     | '/category'
+    | '/dashboard'
     | '/login'
     | '/profile'
     | '/stock-management'
     | '/admin/categories'
+    | '/admin/customers'
     | '/admin/suppliers'
     | '/admin/units'
     | '/auth/callback'
@@ -193,10 +215,12 @@ export interface FileRouteTypes {
     | '/admin'
     | '/cart'
     | '/category'
+    | '/dashboard'
     | '/login'
     | '/profile'
     | '/stock-management'
     | '/admin/categories'
+    | '/admin/customers'
     | '/admin/suppliers'
     | '/admin/units'
     | '/auth/callback'
@@ -211,6 +235,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   CartRoute: typeof CartRoute
   CategoryRoute: typeof CategoryRoute
+  DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
   ProfileRoute: typeof ProfileRoute
   StockManagementRoute: typeof StockManagementRoute
@@ -256,6 +281,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CategoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -289,6 +321,13 @@ declare module '@tanstack/react-router' {
       path: '/categories'
       fullPath: '/admin/categories'
       preLoaderRoute: typeof AdminCategoriesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/customers': {
+      id: '/admin/customers'
+      path: '/customers'
+      fullPath: '/admin/customers'
+      preLoaderRoute: typeof AdminCustomersRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/suppliers': {
@@ -331,6 +370,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminCategoriesRoute: typeof AdminCategoriesRoute
+  AdminCustomersRoute: typeof AdminCustomersRoute
   AdminSuppliersRoute: typeof AdminSuppliersRoute
   AdminUnitsRoute: typeof AdminUnitsRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -338,6 +378,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminCategoriesRoute: AdminCategoriesRoute,
+  AdminCustomersRoute: AdminCustomersRoute,
   AdminSuppliersRoute: AdminSuppliersRoute,
   AdminUnitsRoute: AdminUnitsRoute,
   AdminIndexRoute: AdminIndexRoute,
@@ -351,6 +392,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   CartRoute: CartRoute,
   CategoryRoute: CategoryRoute,
+  DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
   ProfileRoute: ProfileRoute,
   StockManagementRoute: StockManagementRoute,

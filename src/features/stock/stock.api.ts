@@ -17,7 +17,7 @@ function normalize(row: object, id: string): adminRecord {
 
 export async function getStockRecords(entity: Entity): Promise<adminRecord[]> {
     const {data, error} = entity === 'order'
-        ? await supabase.from('order').select('*, summary:order_details(quantity_sold,sale_price)').order('added_on', {ascending: false})
+        ? await supabase.from('order').select('*, summary:order_details(quantity_sold,sale_price)').eq('order_status', 'delivered').order('added_on', {ascending: false})
         : entity === 'purchase'
             ? await supabase.from('purchase').select('*, summary:purchase_details(quantity_bought)').order('added_on', {ascending: false})
             : await supabase.from('item_return').select('*, summary:return_details(quantity_returned)').order('added_on', {ascending: false});
@@ -60,8 +60,7 @@ export async function saveStockRecord(entity: Entity, values: Record<string, str
     const audit = {updated_by: user.id, updated_on: new Date().toISOString()};
     let result;
     if (entity === 'order') {
-        const payload: Database['public']['Tables']['order']['Insert'] = {...audit, order_notes: values.order_notes || null, order_status: values.order_status as Database['public']['Enums']['order_status']};
-        result = await supabase.from('order').update(payload).eq('order_id', id).select('order_id').single();
+        throw new Error('Order changes must use update_order_status.');
     } else if (entity === 'purchase') {
         const payload: Database['public']['Tables']['purchase']['Insert'] = {...audit, invoice_number: values.invoice_number, supplier_id: values.supplier_id || null, purchase_notes: values.purchase_notes || null};
         result = await supabase.from('purchase').update(payload).eq('purchase_id', id).select('purchase_id').single();
@@ -83,8 +82,7 @@ export async function saveStockDetail(entity: Entity, parentId: string, values: 
     const common = {item_id: values.item_id, batch_number: values.batch_number || null, expiry_date: values.expiry_date || null};
     let result;
     if (entity === 'order') {
-        const payload = {...common, order_id: parentId, quantity_sold: quantity, sale_price: price};
-        result = await (id ? supabase.from('order_details').update(payload).eq('order_details_id', id).eq('order_id', parentId) : supabase.from('order_details').insert(payload)).select('order_details_id').single();
+        throw new Error('Order lines cannot be edited after creation.');
     } else {
         // return_details_id has no database default.
         const payload = {...common, return_id: parentId, quantity_returned: quantity};

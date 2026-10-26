@@ -21,9 +21,9 @@ function Admin() {
             <Button component={Link} to="/admin" activeOptions={{exact: true}} sx={styles.menuLink}>Items</Button>
             <Button component={Link} to="/admin/categories" sx={styles.menuLink}>Categories</Button>
             <Button component={Link} to="/admin/units" sx={styles.menuLink}>Units of measure</Button>
+            <Button component={Link} to="/admin/customers" sx={styles.menuLink}>Customers</Button>
             <Button component={Link} to="/admin/suppliers" sx={styles.menuLink}>Suppliers</Button>
         </NavigationStrip>
         <Outlet />
     </Box>;
 }
-

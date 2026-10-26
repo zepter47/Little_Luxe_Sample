@@ -1,3 +1,4 @@
+import OrderDashboard from '../orders/OrderDashboard';
 import StockDocumentForm from './StockDocumentForm';
 import NavigationStrip from '../../components/NavigationStrip';
 import { useState } from 'react';
@@ -19,7 +20,7 @@ export default function StockManagement() {
             {(Object.keys(entityInfo) as Entity[]).map(key => <Button key={key} aria-pressed={key === entity} data-status={key === entity ? 'active' : undefined}
                 sx={styles.menuLink} onClick={() => setEntity(key)}>{entityInfo[key].title}</Button>)}
         </NavigationStrip>
-        <StockEntity key={entity} entity={entity} />
+        {entity === 'order' ? <OrderDashboard staff deliveredOnly /> : <StockEntity key={entity} entity={entity} />}
     </Box>;
 }
 
@@ -81,7 +82,7 @@ function StockEntity({entity}: {entity: Entity}) {
         </Box>;
     }
     return <Box>
-        {creationPaused && <Alert severity="info" sx={{mb: 2}}>Creating orders and returns is paused pending workflow review.</Alert>}
+        {creationPaused && <Alert severity="info" sx={{mb: 2}}>Creating returns is paused pending workflow review.</Alert>}
         {created && <Alert severity="success" sx={{mb: 2}}>{config.singular[0].toUpperCase() + config.singular.slice(1)} and all item lines saved successfully.</Alert>}
         <AdminRecordManager title={config.title} singular={config.singular} rows={rows} fields={fields} displayFields={displayFields}
         queryKey={['stock', entity]} onSave={async (values, id) => {
