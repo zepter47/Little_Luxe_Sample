@@ -1,0 +1,1 @@
+import{t as e}from"./itemCollection-g3Ettoz8.js";var t=e;export{t as component};
