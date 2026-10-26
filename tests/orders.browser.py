@@ -1,10 +1,11 @@
 """Mocked order/customer browser checks. Use the build and preview command in cart.browser.py."""
+import os
 import base64
 import json
 import time
 from playwright.sync_api import sync_playwright, expect
 
-BASE='http://127.0.0.1:4174/Little_Luxe_Sample/'
+BASE=os.environ.get('ORDER_PREVIEW_URL','http://127.0.0.1:4174/Little_Luxe_Sample/')
 STAFF='22222222-2222-4222-8222-222222222222'
 CUSTOMER='44444444-4444-4444-8444-444444444444'
 ITEM='11111111-1111-4111-8111-111111111111'
@@ -74,6 +75,8 @@ with sync_playwright() as p:
     page.get_by_role('option',name='Walk In · 0700000000',exact=True).click()
     page.get_by_role('combobox',name='Item',exact=True).click()
     page.get_by_role('option',name='Floral Dress',exact=True).click()
+    expect(page.get_by_role('dialog').locator('.MuiInputLabel-root')).to_have_count(0)
+    expect(page.get_by_role('dialog').locator('label',has_text='Quantity')).to_be_visible()
     page.get_by_role('button',name='Create order',exact=True).click()
     assert not any(c[0]=='create_staff_order' for c in calls)
     page.get_by_role('button',name='No',exact=True).click()

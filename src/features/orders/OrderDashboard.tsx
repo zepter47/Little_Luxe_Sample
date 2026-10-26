@@ -1,3 +1,4 @@
+import LabeledTextField from "../../components/forms/LabeledTextField";
 import { useAuth } from "../auth/auth";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -13,7 +14,6 @@ import {
   DialogTitle,
   Paper,
   Stack,
-  TextField,
   Typography,
 } from "@mui/material";
 import {
@@ -282,7 +282,8 @@ function OrderView({
                 : ""}
             </Typography>
             {action === "declined" && (
-              <TextField
+              <LabeledTextField
+                fullWidth
                 label="Reason for decline"
                 required
                 multiline

@@ -1,3 +1,4 @@
+import LabeledTextField from "../../components/forms/LabeledTextField";
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -9,7 +10,6 @@ import {
   DialogTitle,
   MenuItem,
   Stack,
-  TextField,
   Typography,
 } from "@mui/material";
 import { getCustomers } from "../customers/customer.api";
@@ -83,7 +83,8 @@ export default function StaffOrderForm({ onClose }: { onClose: () => void }) {
               </Button>
             </Alert>
           )}
-          <TextField
+          <LabeledTextField
+            fullWidth
             select
             label="Customer"
             required
@@ -95,11 +96,13 @@ export default function StaffOrderForm({ onClose }: { onClose: () => void }) {
               .filter((c) => c.is_active)
               .map((c) => (
                 <MenuItem key={c.customer_id} value={c.customer_id}>
-                  {c.first_name} {c.last_name} ·{" "}
-                  {c.phone_number || c.email || c.customer_id}
+                  {[c.first_name, c.last_name].filter(Boolean).join(" ") ||
+                    c.email ||
+                    "Customer"}{" "}
+                  · {c.phone_number || c.email || c.customer_id}
                 </MenuItem>
               ))}
-          </TextField>
+          </LabeledTextField>
           {customers.isSuccess && !customers.data.some((c) => c.is_active) && (
             <Alert severity="info">
               Add an active customer in the Customers tab first.
@@ -107,7 +110,7 @@ export default function StaffOrderForm({ onClose }: { onClose: () => void }) {
           )}
           {lines.map((line, n) => (
             <Stack key={n} direction={{ xs: "column", sm: "row" }} spacing={1}>
-              <TextField
+              <LabeledTextField
                 select
                 label="Item"
                 value={line.item_id}
@@ -128,8 +131,9 @@ export default function StaffOrderForm({ onClose }: { onClose: () => void }) {
                     {i.item_name}
                   </MenuItem>
                 ))}
-              </TextField>
-              <TextField
+              </LabeledTextField>
+              <LabeledTextField
+                fullWidth
                 label="Quantity"
                 type="number"
                 value={line.quantity}
@@ -137,7 +141,8 @@ export default function StaffOrderForm({ onClose }: { onClose: () => void }) {
                 slotProps={{ htmlInput: { min: 1, max: 999, step: 1 } }}
                 onChange={(e) => patch(n, { quantity: Number(e.target.value) })}
               />
-              <TextField
+              <LabeledTextField
+                fullWidth
                 label="Sale price"
                 value={line.sale_price}
                 slotProps={{ input: { readOnly: true } }}
@@ -161,7 +166,8 @@ export default function StaffOrderForm({ onClose }: { onClose: () => void }) {
           >
             Add item
           </Button>
-          <TextField
+          <LabeledTextField
+            fullWidth
             label="Order notes"
             multiline
             value={notes}

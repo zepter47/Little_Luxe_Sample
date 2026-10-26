@@ -104,9 +104,10 @@ export async function updateOrderStatus(
   };
 }
 export function allowedActions(
-  origin: OrderOrigin,
+  origin: string,
   status: OrderStatus | null,
 ): OrderStatus[] {
+  if (origin !== "online" && origin !== "staff") return [];
   if (origin === "staff")
     return status === "received" ? ["delivered", "declined"] : [];
   return status === "received"

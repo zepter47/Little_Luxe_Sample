@@ -1,5 +1,5 @@
 -- CLI migration creation was attempted; CLI cannot create its read-only home config.
--- Review only: not applied to the hosted database.
+-- Applied to hosted Supabase; filename matches its recorded migration version.
 BEGIN;
 CREATE SCHEMA IF NOT EXISTS order_private;
 REVOKE ALL ON SCHEMA order_private FROM PUBLIC, anon, authenticated;

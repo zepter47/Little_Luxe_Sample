@@ -3,6 +3,7 @@ Build with VITE_SUPABASE_URL=https://checkout-test.supabase.co and
 VITE_SUPABASE_PUBLISHABLE_KEY=test-publishable-key, then run preview with --base /Little_Luxe_Sample/ on 4174.
 Run with Python + Playwright and Chromium installed. No real service is contacted.
 """
+import os
 import base64
 import json
 import time
@@ -55,7 +56,7 @@ with sync_playwright() as p:
     page.route('https://checkout-test.supabase.co/**',api)
     errors = []
     page.on('pageerror',lambda error: errors.append(str(error)))
-    base_url = 'http://127.0.0.1:4174/Little_Luxe_Sample/'
+    base_url = os.environ.get('ORDER_PREVIEW_URL', 'http://127.0.0.1:4174/Little_Luxe_Sample/')
     page.goto(base_url)
     add = page.get_by_role('button',name='Add Floral Dress to cart',exact=True)
     add.click()

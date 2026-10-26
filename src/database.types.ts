@@ -14,24 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      customer: {
-        Row: CustomerRow
-        Insert: Omit<CustomerRow, 'customer_id' | 'added_on' | 'updated_by' | 'updated_on'> & {customer_id?: string; added_on?: string}
-        Update: Partial<CustomerRow>
-        Relationships: []
-      }
-      stock_reservation: {
-        Row: {reservation_id: string; order_details_id: string; stock_id: string; quantity_reserved: number; reservation_status: string; created_at: string}
-        Insert: {order_details_id: string; stock_id: string; quantity_reserved: number; reservation_id?: string; reservation_status?: string; created_at?: string}
-        Update: {reservation_status?: string}
-        Relationships: []
-      }
-      order_status_history: {
-        Row: {history_id: number; order_id: string; previous_status: Database['public']['Enums']['order_status'] | null; new_status: Database['public']['Enums']['order_status']; changed_by: string | null; actor_type: string; change_source: string; reason_code: string; reason_notes: string | null; changed_on: string}
-        Insert: never
-        Update: never
-        Relationships: []
-      }
       cart: {
         Row: {
           batch_number: string | null
@@ -66,6 +48,54 @@ export type Database = {
             referencedColumns: ["item_id"]
           },
         ]
+      }
+      customer: {
+        Row: {
+          added_by: string
+          added_on: string
+          address: string | null
+          customer_id: string
+          customer_notes: string | null
+          customer_origin: string
+          email: string | null
+          first_name: string | null
+          is_active: boolean
+          last_name: string | null
+          phone_number: string | null
+          updated_by: string | null
+          updated_on: string | null
+        }
+        Insert: {
+          added_by: string
+          added_on?: string
+          address?: string | null
+          customer_id?: string
+          customer_notes?: string | null
+          customer_origin?: string
+          email?: string | null
+          first_name?: string | null
+          is_active?: boolean
+          last_name?: string | null
+          phone_number?: string | null
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Update: {
+          added_by?: string
+          added_on?: string
+          address?: string | null
+          customer_id?: string
+          customer_notes?: string | null
+          customer_origin?: string
+          email?: string | null
+          first_name?: string | null
+          is_active?: boolean
+          last_name?: string | null
+          phone_number?: string | null
+          updated_by?: string | null
+          updated_on?: string | null
+        }
+        Relationships: []
       }
       games: {
         Row: {
@@ -295,76 +325,84 @@ export type Database = {
       }
       order: {
         Row: {
+          added_by: string
+          added_on: string
           customer_id: string
-          order_origin: 'online' | 'staff'
           expected_expiry_date: string
-          request_id: string
-          added_by: string | null
-          added_on: string | null
           is_active: boolean | null
           order_id: string
           order_notes: string | null
-          order_status: Database["public"]["Enums"]["order_status"] | null
+          order_origin: string
+          order_status: Database["public"]["Enums"]["order_status"]
+          request_id: string
           updated_by: string | null
           updated_on: string | null
         }
         Insert: {
+          added_by: string
+          added_on?: string
           customer_id: string
-          order_origin: 'online' | 'staff'
           expected_expiry_date: string
-          request_id: string
-          added_by?: string | null
-          added_on?: string | null
           is_active?: boolean | null
           order_id?: string
           order_notes?: string | null
-          order_status?: Database["public"]["Enums"]["order_status"] | null
+          order_origin: string
+          order_status?: Database["public"]["Enums"]["order_status"]
+          request_id: string
           updated_by?: string | null
           updated_on?: string | null
         }
         Update: {
+          added_by?: string
+          added_on?: string
           customer_id?: string
-          order_origin?: 'online' | 'staff'
           expected_expiry_date?: string
-          request_id?: string
-          added_by?: string | null
-          added_on?: string | null
           is_active?: boolean | null
           order_id?: string
           order_notes?: string | null
-          order_status?: Database["public"]["Enums"]["order_status"] | null
+          order_origin?: string
+          order_status?: Database["public"]["Enums"]["order_status"]
+          request_id?: string
           updated_by?: string | null
           updated_on?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "order_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer"
+            referencedColumns: ["customer_id"]
+          },
+        ]
       }
       order_details: {
         Row: {
           batch_number: string | null
           expiry_date: string | null
-          item_id: string | null
+          item_id: string
           order_details_id: string
-          order_id: string | null
-          quantity_sold: number | null
-          sale_price: number | null
+          order_id: string
+          quantity_sold: number
+          sale_price: number
         }
         Insert: {
           batch_number?: string | null
           expiry_date?: string | null
-          item_id?: string | null
+          item_id: string
           order_details_id?: string
-          order_id?: string | null
-          quantity_sold?: number | null
-          sale_price?: number | null
+          order_id: string
+          quantity_sold: number
+          sale_price: number
         }
         Update: {
           batch_number?: string | null
           expiry_date?: string | null
-          item_id?: string | null
+          item_id?: string
           order_details_id?: string
-          order_id?: string | null
-          quantity_sold?: number | null
-          sale_price?: number | null
+          order_id?: string
+          quantity_sold?: number
+          sale_price?: number
         }
         Relationships: [
           {
@@ -376,6 +414,53 @@ export type Database = {
           },
           {
             foreignKeyName: "sale_details_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "order"
+            referencedColumns: ["order_id"]
+          },
+        ]
+      }
+      order_status_history: {
+        Row: {
+          actor_type: string
+          change_source: string
+          changed_by: string | null
+          changed_on: string
+          history_id: number
+          new_status: Database["public"]["Enums"]["order_status"]
+          order_id: string
+          previous_status: Database["public"]["Enums"]["order_status"] | null
+          reason_code: string
+          reason_notes: string | null
+        }
+        Insert: {
+          actor_type: string
+          change_source: string
+          changed_by?: string | null
+          changed_on?: string
+          history_id?: never
+          new_status: Database["public"]["Enums"]["order_status"]
+          order_id: string
+          previous_status?: Database["public"]["Enums"]["order_status"] | null
+          reason_code: string
+          reason_notes?: string | null
+        }
+        Update: {
+          actor_type?: string
+          change_source?: string
+          changed_by?: string | null
+          changed_on?: string
+          history_id?: never
+          new_status?: Database["public"]["Enums"]["order_status"]
+          order_id?: string
+          previous_status?: Database["public"]["Enums"]["order_status"] | null
+          reason_code?: string
+          reason_notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_status_history_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "order"
@@ -531,30 +616,30 @@ export type Database = {
       }
       stock: {
         Row: {
-          quantity_reserved: number
           batch_number: string | null
           cost_price: number
           expiry_date: string | null
           item_id: string
-          quantity_at_hand: number | null
+          quantity_at_hand: number
+          quantity_reserved: number
           stock_id: string
         }
         Insert: {
-          quantity_reserved?: number
           batch_number?: string | null
           cost_price: number
           expiry_date?: string | null
           item_id: string
-          quantity_at_hand?: number | null
+          quantity_at_hand: number
+          quantity_reserved?: number
           stock_id: string
         }
         Update: {
-          quantity_reserved?: number
           batch_number?: string | null
           cost_price?: number
           expiry_date?: string | null
           item_id?: string
-          quantity_at_hand?: number | null
+          quantity_at_hand?: number
+          quantity_reserved?: number
           stock_id?: string
         }
         Relationships: [
@@ -564,6 +649,48 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "item"
             referencedColumns: ["item_id"]
+          },
+        ]
+      }
+      stock_reservation: {
+        Row: {
+          created_at: string
+          order_details_id: string
+          quantity_reserved: number
+          reservation_id: string
+          reservation_status: string
+          stock_id: string
+        }
+        Insert: {
+          created_at?: string
+          order_details_id: string
+          quantity_reserved: number
+          reservation_id?: string
+          reservation_status?: string
+          stock_id: string
+        }
+        Update: {
+          created_at?: string
+          order_details_id?: string
+          quantity_reserved?: number
+          reservation_id?: string
+          reservation_status?: string
+          stock_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_reservation_order_details_id_fkey"
+            columns: ["order_details_id"]
+            isOneToOne: false
+            referencedRelation: "order_details"
+            referencedColumns: ["order_details_id"]
+          },
+          {
+            foreignKeyName: "stock_reservation_stock_id_fkey"
+            columns: ["stock_id"]
+            isOneToOne: false
+            referencedRelation: "stock"
+            referencedColumns: ["stock_id"]
           },
         ]
       }
@@ -706,63 +833,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      create_online_order: {Args: {p_items_json: Json; p_request_id: string; p_order_notes?: string}; Returns: string}
-      create_staff_order: {Args: {p_customer_id: string; p_items_json: Json; p_request_id: string; p_order_notes?: string}; Returns: string}
-      update_order_status: {Args: {p_order_id: string; p_new_status: Database['public']['Enums']['order_status']; p_reason?: string}; Returns: Json}
-      get_order_timeline: {Args: {p_order_id: string}; Returns: {history_id: number; previous_status: Database['public']['Enums']['order_status'] | null; new_status: Database['public']['Enums']['order_status']; changed_on: string}[]}
-      save_customer: {Args: {p_first_name: string; p_last_name: string; p_email?: string; p_phone_number?: string; p_address?: string; p_customer_notes?: string; p_customer_id?: string; p_is_active?: boolean}; Returns: string}
-      create_purchase: {
-        Args: {
-          p_invoice_number: string
-          p_items_json: Json
-          p_supplier_id?: string
-          p_purchase_notes?: string
-          p_added_on?: string
-        }
-        Returns: string
-      }
-      save_item: {
-        Args: {
-          p_category_id: string
-          p_image_path?: string
-          p_is_active?: boolean
-          p_item_id?: string
-          p_item_name: string
-          p_product_notes: string
-          p_sale_price: number
-          p_uom_id: string
-        }
-        Returns: string
-      }
-      get_admin_items_with_stock: {
-        Args: { p_include_inactive?: boolean }
-        Returns: {
-          image_path: string
-          is_active: boolean
-          is_stocked: boolean
-          item_category_id: string
-          item_id: string
-          item_name: string
-          product_notes: string
-          quantity_on_hand: number
-          sale_price: number
-          uom_id: string
-        }[]
-      }
-      get_storefront_items: {
-        Args: never
-        Returns: {
-          image_path: string
-          is_active: boolean
-          is_stocked: boolean
-          item_category_id: string
-          item_id: string
-          item_name: string
-          product_notes: string
-          sale_price: number
-        }[]
-      }
-
       add_item_with_category_name: {
         Args: {
           p_added_by: string
@@ -784,7 +854,71 @@ export type Database = {
         }
         Returns: boolean
       }
+      create_online_order: {
+        Args: {
+          p_items_json: Json
+          p_order_notes?: string
+          p_request_id: string
+        }
+        Returns: string
+      }
+      create_purchase: {
+        Args: {
+          p_added_on?: string
+          p_invoice_number: string
+          p_items_json: Json
+          p_purchase_notes?: string
+          p_supplier_id?: string
+        }
+        Returns: string
+      }
+      create_staff_order: {
+        Args: {
+          p_customer_id: string
+          p_items_json: Json
+          p_order_notes?: string
+          p_request_id: string
+        }
+        Returns: string
+      }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
+      get_admin_items_with_stock: {
+        Args: { p_include_inactive?: boolean }
+        Returns: {
+          image_path: string
+          is_active: boolean
+          is_stocked: boolean
+          item_category_id: string
+          item_id: string
+          item_name: string
+          product_notes: string
+          quantity_on_hand: number
+          sale_price: number
+          uom_id: string
+        }[]
+      }
+      get_order_timeline: {
+        Args: { p_order_id: string }
+        Returns: {
+          changed_on: string
+          history_id: number
+          new_status: Database["public"]["Enums"]["order_status"]
+          previous_status: Database["public"]["Enums"]["order_status"]
+        }[]
+      }
+      get_storefront_items: {
+        Args: never
+        Returns: {
+          image_path: string
+          is_active: boolean
+          is_stocked: boolean
+          item_category_id: string
+          item_id: string
+          item_name: string
+          product_notes: string
+          sale_price: number
+        }[]
+      }
       process_secure_purchase: {
         Args: {
           p_invoice_number: string
@@ -793,6 +927,40 @@ export type Database = {
           p_supplier_name: string
         }
         Returns: string
+      }
+      save_customer: {
+        Args: {
+          p_address?: string
+          p_customer_id?: string
+          p_customer_notes?: string
+          p_email?: string
+          p_first_name: string
+          p_is_active?: boolean
+          p_last_name: string
+          p_phone_number?: string
+        }
+        Returns: string
+      }
+      save_item: {
+        Args: {
+          p_category_id: string
+          p_image_path?: string
+          p_is_active?: boolean
+          p_item_id?: string
+          p_item_name: string
+          p_product_notes: string
+          p_sale_price: number
+          p_uom_id: string
+        }
+        Returns: string
+      }
+      update_order_status: {
+        Args: {
+          p_new_status: Database["public"]["Enums"]["order_status"]
+          p_order_id: string
+          p_reason?: string
+        }
+        Returns: Json
       }
     }
     Enums: {
@@ -1052,6 +1220,3 @@ export const Constants = {
     },
   },
 } as const
-
-
-export type CustomerRow = {customer_id: string; first_name: string; last_name: string; email: string | null; phone_number: string | null; address: string | null; customer_notes: string | null; is_active: boolean; added_by: string; added_on: string; updated_by: string | null; updated_on: string | null}

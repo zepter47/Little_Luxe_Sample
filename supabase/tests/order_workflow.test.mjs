@@ -1,22 +1,45 @@
 import test, { after } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 const { PGlite } = await import(
   process.env.PGLITE_MODULE || "@electric-sql/pglite"
 );
 const sql = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
+const migration = (name) => {
+  const path = readdirSync(new URL("../migrations/", import.meta.url)).find(
+    (p) => p.endsWith("_" + name + ".sql"),
+  );
+  assert.ok(path, `Missing migration ${name}`);
+  return sql("../migrations/" + path);
+};
 const customer = "11111111-1111-4111-8111-111111111111",
   staff = "22222222-2222-4222-8222-222222222222";
 const item = "33333333-3333-4333-8333-333333333333";
 const shared = new PGlite();
 await shared.exec(sql("./fixtures/order_base.sql"));
-await shared.exec(sql("../migrations/20261027000000_order_reservations.sql"));
+await shared.exec(migration("order_reservations"));
+// Existing users test migration backfill; new users test the signup trigger.
+await shared.query("insert into auth.users(id,email) values($1,$2)", [
+  customer,
+  "customer@example.test",
+]);
+await shared.exec(migration("customer_auth_accounts"));
+await shared.exec(migration("order_access_review"));
+assert.equal(
+  (
+    await shared.query(
+      "select customer_id from customer where customer_id=$1",
+      [customer],
+    )
+  ).rows.length,
+  1,
+);
 after(() => shared.close());
 async function setup() {
   const db = shared;
   await db.exec(
-    'reset role; truncate order_private.requests,order_status_history,stock_reservation,order_details,"order",customer,stock,item restart identity cascade',
+    'reset role; truncate order_private.requests,order_status_history,stock_reservation,order_details,"order",customer,stock,item,auth.users restart identity cascade',
   );
   await db.query(
     "insert into item(item_id,item_name,sale_price) values($1,$2,20)",
@@ -26,6 +49,12 @@ async function setup() {
     "insert into stock(item_id,quantity_at_hand,cost_price,batch_number) values($1,4,5,$2),($1,6,8,$3)",
     [item, "A", "B"],
   );
+  await db.query("insert into auth.users(id,email) values($1,$2),($3,$4)", [
+    customer,
+    "customer@example.test",
+    staff,
+    "staff@example.test",
+  ]);
   return db;
 }
 async function actor(db, id, role = "customer") {
@@ -187,7 +216,7 @@ test("staff selects existing customer; cash sale bypasses processing/shipping", 
     await assert.rejects(
       () =>
         db.query("select create_staff_order($1,$2::jsonb,$3)", [
-          customer,
+          randomUUID(),
           lines(),
           randomUUID(),
         ]),
@@ -378,6 +407,123 @@ test("anonymous calls cannot create orders", async () => {
     );
     await db.exec("set role authenticated");
     await assert.rejects(() => online(db), /Authentication required/);
+  } finally {
+    await db.exec("reset role");
+  }
+});
+
+test("signup provisions a matching customer and keeps names/contact synchronized", async () => {
+  const db = await setup();
+  try {
+    const id = randomUUID();
+    await db.query(
+      "insert into auth.users(id,email,raw_user_meta_data) values($1,$2,$3)",
+      [
+        id,
+        "new@example.test",
+        JSON.stringify({ first_name: "New", last_name: "Shopper" }),
+      ],
+    );
+    let c = (
+      await db.query("select * from customer where customer_id=$1", [id])
+    ).rows[0];
+    assert.equal(c.customer_origin, "account");
+    assert.equal(c.first_name, "New");
+    assert.equal(c.added_by, id);
+    await db.query("update auth.users set email=$2 where id=$1", [
+      id,
+      "updated@example.test",
+    ]);
+    c = (await db.query("select * from customer where customer_id=$1", [id]))
+      .rows[0];
+    assert.equal(c.email, "updated@example.test");
+    await actor(db, id);
+    assert.equal(
+      (await db.query("select customer_id from customer")).rows.length,
+      1,
+    );
+    await online(db, 1);
+  } finally {
+    await db.exec("reset role");
+  }
+});
+
+test("anonymous conversion provisions a customer only when the account becomes permanent", async () => {
+  const db = await setup();
+  try {
+    const id = randomUUID();
+    await db.query("insert into auth.users(id,is_anonymous) values($1,true)", [
+      id,
+    ]);
+    assert.equal(
+      (await db.query("select * from customer where customer_id=$1", [id])).rows
+        .length,
+      0,
+    );
+    await db.query(
+      "update auth.users set is_anonymous=false,email='converted@example.test' where id=$1",
+      [id],
+    );
+    assert.equal(
+      (await db.query("select * from customer where customer_id=$1", [id])).rows
+        .length,
+      1,
+    );
+  } finally {
+    await db.exec("reset role");
+  }
+});
+
+test("order foreign key rejects nonexistent customers and protects referenced customer records", async () => {
+  const db = await setup();
+  try {
+    await actor(db, customer);
+    const id = await online(db, 1);
+    await db.exec("reset role");
+    await assert.rejects(
+      () =>
+        db.query(
+          'update public."order" set customer_id=$1,added_by=$1 where order_id=$2',
+          [randomUUID(), id],
+        ),
+      /foreign key/,
+    );
+    await assert.rejects(
+      () => db.query("delete from customer where customer_id=$1", [customer]),
+      /foreign key/,
+    );
+  } finally {
+    await db.exec("reset role");
+  }
+});
+
+test("staff registration generates an independent UUID; inactive online accounts cannot order", async () => {
+  const db = await setup();
+  try {
+    await actor(db, staff, "staff");
+    const id = (await db.query("select save_customer('Walk','In') id")).rows[0]
+      .id;
+    await db.exec("reset role");
+    assert.notEqual(id, staff);
+    assert.equal(
+      (
+        await db.query(
+          "select customer_origin from customer where customer_id=$1",
+          [id],
+        )
+      ).rows[0].customer_origin,
+      "staff",
+    );
+    assert.equal(
+      (await db.query("select * from auth.users where id=$1", [id])).rows
+        .length,
+      0,
+    );
+    await db.query("update customer set is_active=false where customer_id=$1", [
+      customer,
+    ]);
+    await actor(db, customer);
+    await assert.rejects(() => online(db), /account is unavailable/);
   } finally {
     await db.exec("reset role");
   }
