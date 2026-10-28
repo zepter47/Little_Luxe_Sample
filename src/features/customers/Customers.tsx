@@ -1,47 +1,24 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Alert, Button, CircularProgress } from "@mui/material";
-import CustomerRecords from "./components/CustomerRecords";
-import { getCustomers, saveCustomer } from "./customer.api";
+import { Alert, Box, Button, CircularProgress, Paper, Typography } from "@mui/material";
+import { getCustomersQueryOption } from "./customer.query";
+import type { Customer } from "./customer.types";
+import CustomerList from "./components/CustomerList";
+import CustomerForm from "./components/CustomerForm";
+import { styles } from "./components/Customer.styles";
+
 export default function Customers() {
-  const query = useQuery({ queryKey: ["customers"], queryFn: getCustomers });
-  if (query.isPending)
-    return <CircularProgress aria-label="Loading customers" />;
-  if (query.error)
-    return (
-      <Alert severity="error">
-        {query.error.message}
-        <Button onClick={() => void query.refetch()}>Retry</Button>
-      </Alert>
-    );
-  return (
-    <CustomerRecords
-      title="Customers"
-      singular="customer"
-      queryKey={["customers"]}
-      rows={query.data.map((c) => ({
-        ...Object.fromEntries(
-          Object.entries(c).map(([k, v]) => [k, v == null ? "" : String(v)]),
-        ),
-        id: c.customer_id,
-      }))}
-      fields={[
-        { name: "first_name", label: "First name", required: true },
-        { name: "last_name", label: "Last name", required: true },
-        { name: "email", label: "Email", type: "email" },
-        { name: "phone_number", label: "Phone number" },
-        { name: "address", label: "Address", multiline: true },
-        { name: "customer_notes", label: "Notes", multiline: true },
-        {
-          name: "is_active",
-          label: "Active",
-          defaultValue: "true",
-          options: [
-            { value: "true", label: "Yes" },
-            { value: "false", label: "No" },
-          ],
-        },
-      ]}
-      onSave={saveCustomer}
-    />
-  );
+    const query = useQuery(getCustomersQueryOption());
+    const [editing, setEditing] = useState<Customer | null | undefined>();
+    const [saved, setSaved] = useState(false);
+    if (query.isPending) return <CircularProgress aria-label="Loading customers" />;
+    if (query.error) return <Alert severity="error">{query.error.message}<Button onClick={() => {void query.refetch();}}>Retry</Button></Alert>;
+    return <Paper variant="outlined" sx={styles.panel}>
+        <Box sx={styles.toolbar}><Typography component="h2" variant="h5">Customers</Typography>
+            <Button variant="contained" onClick={() => {setSaved(false); setEditing(null);}}>Add customer</Button></Box>
+        {saved && <Alert severity="success">customer saved successfully.</Alert>}
+        <CustomerList rows={query.data} onEdit={row => {setSaved(false); setEditing(row);}} />
+        {editing !== undefined && <CustomerForm record={editing || undefined} onCancel={() => setEditing(undefined)}
+            onSaved={() => {setEditing(undefined); setSaved(true);}} />}
+    </Paper>;
 }

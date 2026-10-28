@@ -28,6 +28,7 @@ session = dict(access_token=token, refresh_token='test-refresh', expires_in=3600
 purchases = []
 purchase_lines = []
 create_calls = []
+writes = []
 requests = []
 categories = []
 units = []
@@ -39,6 +40,8 @@ def api(route):
         route.fulfill(status=200, headers=headers)
         return
     requests.append(url)
+    if method in ("POST", "PATCH", "DELETE") and "/rest/v1/" in url:
+        writes.append((method, url))
     body = route.request.post_data_json if method in ('POST', 'PATCH') else None
     if '/auth/v1/user' in url:
         result = user
@@ -83,6 +86,16 @@ def api(route):
         raise AssertionError('Unexpected API request: ' + url)
     route.fulfill(status=200, headers=headers, content_type='application/json', body=json.dumps(result))
 
+def save_with_approval(page, button_name):
+    before = len(writes)
+    page.get_by_role('button', name=button_name, exact=True).click()
+    expect(page.get_by_role('button', name='Yes', exact=True)).to_be_visible()
+    assert len(writes) == before
+    page.get_by_role('button', name='No', exact=True).click()
+    assert len(writes) == before
+    page.get_by_role('button', name=button_name, exact=True).click()
+    page.get_by_role('button', name='Yes', exact=True).click()
+
 with sync_playwright() as p:
     browser = p.chromium.launch(executable_path='/usr/bin/chromium', headless=True, args=['--no-sandbox'])
     context = browser.new_context(viewport={'width': 1280, 'height': 900})
@@ -105,11 +118,11 @@ with sync_playwright() as p:
     page.get_by_role('textbox', name='Batch number', exact=True).fill('B1')
     page.get_by_role('textbox', name='Notes', exact=True).fill('Purchase draft')
     expect(page.get_by_text('Grand total: 25.00', exact=True)).to_be_visible()
-    page.get_by_role('button', name='Save purchase', exact=True).click()
+    save_with_approval(page, 'Save purchase')
     expect(page.get_by_text('Purchase save failed. Please retry.', exact=True)).to_be_visible()
     expect(page.get_by_role('textbox', name='Invoice', exact=False)).to_have_value('INV-1')
     expect(page.get_by_role('spinbutton', name='Quantity bought', exact=False)).to_have_value('2')
-    page.get_by_role('button', name='Save purchase', exact=True).click()
+    save_with_approval(page, 'Save purchase')
     expect(page.get_by_text('Purchase and all item lines saved successfully.', exact=True)).to_be_visible()
     assert len(create_calls) == 2 and create_calls[0] == create_calls[1]
     assert create_calls[-1]['p_items_json'][0]['quantity_bought'] == 2
@@ -121,7 +134,7 @@ with sync_playwright() as p:
     page.get_by_role('button', name='Back to purchases', exact=False).click()
     page.get_by_role('button', name='Edit', exact=True).click()
     page.get_by_role('textbox', name='Invoice', exact=False).fill('INV-EDITED')
-    page.get_by_role('button', name='Save', exact=True).click()
+    save_with_approval(page, 'Save')
     expect(page.get_by_role('dialog')).to_have_count(0)
     expect(page.get_by_role('gridcell', name='INV-EDITED', exact=True)).to_be_visible()
     # The independently owned compact list keeps the same actions and labels.
@@ -146,12 +159,12 @@ with sync_playwright() as p:
     page.goto(BASE + 'admin/categories')
     page.get_by_role('button', name='Add category', exact=True).click()
     page.get_by_role('textbox', name='Category name', exact=False).fill('Independent category')
-    page.get_by_role('button', name='Save', exact=True).click()
+    save_with_approval(page, 'Save')
     expect(page.get_by_text('category saved successfully.', exact=True)).to_be_visible()
     page.goto(BASE + 'admin/units')
     page.get_by_role('button', name='Add unit of measure', exact=True).click()
     page.get_by_role('textbox', name='Unit name', exact=False).fill('Independent unit')
-    page.get_by_role('button', name='Save', exact=True).click()
+    save_with_approval(page, 'Save')
     expect(page.get_by_text('unit of measure saved successfully.', exact=True)).to_be_visible()
     expect(page.get_by_role('heading', name='Independent unit', exact=True)).to_be_visible()
     expect(page.get_by_text('Independent category', exact=True)).to_have_count(0)

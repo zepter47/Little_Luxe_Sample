@@ -1,3 +1,4 @@
+import SaveConfirmation from "./SaveConfirmation";
 import LabeledTextField from "./LabeledTextField";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -8,7 +9,7 @@ import { itemSchema } from "../item.schema";
 import { itemKeys, type AdminItem, type itemFormData } from "../item.types";
 import { getItemImagesQueryOption, saveItemMutationOption } from "../item.query";
 import type { category } from "../../Categories/category.types";
-import type { Unit } from "../../units/unit.query";
+import type { Unit } from "../../units/unit.types";
 import { getItemImageUrl, uploadItemProfileImage, uploadItemGalleryImages, validateItemImage } from "../../../services/itemImages";
 
 function SelectedImage({file}: {file: File}) {
@@ -25,6 +26,9 @@ export default function ItemForm({item, categories, units, onSaved, onCancel}: {
     item?: AdminItem; categories: category[]; units: Unit[]; onSaved: (warning?: string) => void; onCancel: () => void;
 }) {
     const queryClient = useQueryClient();
+    const [approvedDraft, setApprovedDraft] = useState<itemFormData | null>(null);
+    const [saving, setSaving] = useState(false);
+    const savingRef = useRef(false);
     const mutation = useMutation(saveItemMutationOption());
     const profileMutation = useMutation({mutationFn: uploadItemProfileImage});
     const galleryMutation = useMutation({mutationFn: uploadItemGalleryImages});
@@ -41,6 +45,8 @@ export default function ItemForm({item, categories, units, onSaved, onCancel}: {
             sale_price: item?.sale_price || 0, item_category_id: item?.item_category_id || "",
             product_notes: item?.product_notes || "", uom_id: item?.uom_id || ""},
     });
+
+    const pending = isSubmitting || saving;
 
     function chooseImages(files: File[], isProfile: boolean) {
         try {
@@ -84,11 +90,21 @@ export default function ItemForm({item, categories, units, onSaved, onCancel}: {
         }
     }
 
-    return <Box component="form" onSubmit={handleSubmit(onValidSubmit)}>
+    async function saveApprovedDraft() {
+        if (!approvedDraft || savingRef.current) return;
+        savingRef.current = true;
+        setSaving(true);
+        const data = approvedDraft;
+        setApprovedDraft(null);
+        try {await onValidSubmit(data);}
+        finally {savingRef.current = false; setSaving(false);}
+    }
+
+    return <Box component="form" noValidate onSubmit={handleSubmit(values => setApprovedDraft(values))}>
         <Stack spacing={2.5}>
             {imageError && <Alert severity="error">{imageError}</Alert>}
             {warning && <Alert severity="warning">{warning}</Alert>}
-            <Box component="fieldset" disabled={isSubmitting} sx={{border: 0, p: 0, m: 0, minWidth: 0}}>
+            <Box component="fieldset" disabled={pending} sx={{border: 0, p: 0, m: 0, minWidth: 0}}>
             <Stack spacing={2.5}>
             <Controller name="item_name" control={control} render={({field: {ref, ...field}, fieldState}) =>
                 <LabeledTextField {...field} inputRef={ref} label="Item name" fullWidth error={!!fieldState.error} helperText={fieldState.error?.message} />} />
@@ -114,18 +130,18 @@ export default function ItemForm({item, categories, units, onSaved, onCancel}: {
             <Controller name="product_notes" control={control} render={({field: {ref, ...field}}) =>
                 <LabeledTextField {...field} inputRef={ref} label="Description" multiline minRows={3} fullWidth />} />
             <Typography variant="subtitle1">Profile picture</Typography>
-            <Button component="label" variant="outlined" disabled={isSubmitting}>
+            <Button component="label" variant="outlined" disabled={pending}>
                 Add profile picture
-                <input hidden type="file" accept="image/png,image/jpeg,image/webp" disabled={isSubmitting}
+                <input hidden type="file" accept="image/png,image/jpeg,image/webp" disabled={pending}
                     onChange={event => {const files = Array.from(event.target.files || []); if (files.length) chooseImages(files, true); event.target.value = "";}} />
             </Button>
             {profile ? <Stack direction="row" spacing={1} sx={{alignItems: "center"}}><SelectedImage file={profile} />
                 <Button onClick={() => setProfile(undefined)}>Remove selection</Button></Stack>
                 : profilePath && <Box component="img" src={getItemImageUrl(profilePath)} alt="Current profile picture" sx={{height: 180, objectFit: "contain"}} />}
             <Typography variant="subtitle1">Other images</Typography>
-            <Button component="label" variant="outlined" disabled={isSubmitting}>
+            <Button component="label" variant="outlined" disabled={pending}>
                 Add other images
-                <input hidden type="file" multiple accept="image/png,image/jpeg,image/webp" disabled={isSubmitting}
+                <input hidden type="file" multiple accept="image/png,image/jpeg,image/webp" disabled={pending}
                     onChange={event => {chooseImages(Array.from(event.target.files || []), false); event.target.value = "";}} />
             </Button>
             <Typography variant="caption" color="text.secondary">JPEG, PNG or WebP, up to 6 MB each. Selected pictures upload when you save.</Typography>
@@ -139,9 +155,11 @@ export default function ItemForm({item, categories, units, onSaved, onCancel}: {
             </Stack>)}
             </Stack></Box>
             <Stack direction="row" spacing={1} sx={{justifyContent: "flex-end"}}>
-                <Button onClick={onCancel} disabled={isSubmitting}>Cancel</Button>
-                <Button type="submit" variant="contained" disabled={isSubmitting || !units.length}>{isSubmitting ? "Saving item and images…" : "Save item"}</Button>
+                <Button onClick={onCancel} disabled={pending}>Cancel</Button>
+                <Button type="submit" variant="contained" disabled={pending || !units.length}>{pending ? "Saving item and images…" : "Save item"}</Button>
             </Stack>
         </Stack>
+        <SaveConfirmation open={approvedDraft !== null} pending={pending} label="item"
+            onNo={() => setApprovedDraft(null)} onYes={() => {void saveApprovedDraft();}} />
     </Box>;
 }

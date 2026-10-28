@@ -2,7 +2,7 @@ import { Box, Button, Paper, Typography } from "@mui/material";
 import type { GridColDef } from "@mui/x-data-grid";
 import type { AdminItem } from "../item.types";
 import type { category } from "../../Categories/category.types";
-import type { Unit } from "../../units/unit.query";
+import type { Unit } from "../../units/unit.types";
 import ItemResponsiveList from "./ItemResponsiveList";
 import { styles } from "./Item.styles";
 

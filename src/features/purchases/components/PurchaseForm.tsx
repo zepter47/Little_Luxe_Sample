@@ -1,3 +1,5 @@
+import { useRef, useState } from "react";
+import SaveConfirmation from "./SaveConfirmation";
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -14,6 +16,8 @@ export default function PurchaseForm({items, suppliers, onClose, onSaved}: {
     onClose: () => void; onSaved: () => void;
 }) {
     const client = useQueryClient();
+    const [approvedDraft, setApprovedDraft] = useState<PurchaseFormData | null>(null);
+    const saving = useRef(false);
     const mutation = useMutation(createPurchaseMutationOption(client));
     const {control, handleSubmit, formState: {isSubmitting, errors}} = useForm<PurchaseFormData>({
         resolver: zodResolver(purchaseSchema),
@@ -36,8 +40,16 @@ export default function PurchaseForm({items, suppliers, onClose, onSaved}: {
             onSaved();
         } catch { /* Keep the draft open; display the mutation error. */ }
     }
+    async function saveApprovedDraft() {
+        if (!approvedDraft || saving.current) return;
+        saving.current = true;
+        const values = approvedDraft;
+        setApprovedDraft(null);
+        try {await submit(values);}
+        finally {saving.current = false;}
+    }
     return <Dialog open fullWidth maxWidth="lg" onClose={() => {if (!pending) onClose();}}>
-        <Box component="form" noValidate onSubmit={handleSubmit(submit)}>
+        <Box component="form" noValidate onSubmit={handleSubmit(values => setApprovedDraft(values))}>
             <DialogTitle>New purchase</DialogTitle>
             <DialogContent><Stack spacing={3} sx={{pt: 1}}>
                 {mutation.error && <Alert severity="error">{mutation.error.message}</Alert>}
@@ -76,5 +88,7 @@ export default function PurchaseForm({items, suppliers, onClose, onSaved}: {
             </Stack></DialogContent>
             <DialogActions><Button disabled={pending} onClick={onClose}>Cancel</Button><Button type="submit" variant="contained" disabled={pending}>{pending ? 'Saving…' : 'Save purchase'}</Button></DialogActions>
         </Box>
+        <SaveConfirmation open={approvedDraft !== null} pending={pending} label="purchase"
+            onNo={() => setApprovedDraft(null)} onYes={() => {void saveApprovedDraft();}} />
     </Dialog>;
 }

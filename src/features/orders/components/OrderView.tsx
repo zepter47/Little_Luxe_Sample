@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Paper, Stack, Typography } from "@mui/material";
 import { useAuth } from "../../auth/auth";
@@ -33,7 +33,10 @@ export default function OrderView({
   const [message, setMessage] = useState("");
   const client = useQueryClient();
   const mutation = useMutation(updateOrderStatusMutationOption(client));
+  const saving = useRef(false);
   async function submitAction(status: OrderStatus) {
+    if (saving.current) return;
+    saving.current = true;
     try {
       const result = await mutation.mutateAsync({orderId, status, reason});
       setAction(null);
@@ -42,6 +45,7 @@ export default function OrderView({
         ? "Order expired and its reservations were released."
         : result.outcome === "unchanged" ? "Order was already in that status." : "Order updated.");
     } catch { /* Retain the action dialog and show its error. */ }
+    finally {saving.current = false;}
   }
   return (
     <Dialog

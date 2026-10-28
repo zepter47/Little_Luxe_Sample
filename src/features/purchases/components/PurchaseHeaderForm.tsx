@@ -1,3 +1,5 @@
+import { useRef, useState } from "react";
+import SaveConfirmation from "./SaveConfirmation";
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -13,6 +15,8 @@ export default function PurchaseHeaderForm({purchase, suppliers, onClose}: {
     purchase: Purchase; suppliers: {supplier_id: string; supplier_name: string}[]; onClose: () => void;
 }) {
     const client = useQueryClient();
+    const [approvedDraft, setApprovedDraft] = useState<HeaderData | null>(null);
+    const saving = useRef(false);
     const mutation = useMutation(updatePurchaseMutationOption(client));
     const {control, handleSubmit} = useForm<HeaderData>({resolver: zodResolver(headerSchema), defaultValues: {
         invoice_number: purchase.invoice_number, supplier_id: purchase.supplier_id || '', purchase_notes: purchase.purchase_notes || '',
@@ -21,8 +25,16 @@ export default function PurchaseHeaderForm({purchase, suppliers, onClose}: {
         try {await mutation.mutateAsync({id: purchase.purchase_id, purchase: data}); onClose();}
         catch { /* Display the mutation error and preserve the draft. */ }
     }
+    async function saveApprovedDraft() {
+        if (!approvedDraft || saving.current) return;
+        saving.current = true;
+        const values = approvedDraft;
+        setApprovedDraft(null);
+        try {await submit(values);}
+        finally {saving.current = false;}
+    }
     return <Dialog open fullWidth maxWidth="sm" onClose={() => {if (!mutation.isPending) onClose();}}>
-        <Box component="form" noValidate onSubmit={handleSubmit(submit)}>
+        <Box component="form" noValidate onSubmit={handleSubmit(values => setApprovedDraft(values))}>
             <DialogTitle>Edit purchase</DialogTitle>
             <DialogContent><Stack spacing={2} sx={{pt: 1}}>
                 {mutation.error && <Alert severity="error">{mutation.error.message}</Alert>}
@@ -36,5 +48,7 @@ export default function PurchaseHeaderForm({purchase, suppliers, onClose}: {
             </Stack></DialogContent>
             <DialogActions><Button disabled={mutation.isPending} onClick={onClose}>Cancel</Button><Button type="submit" disabled={mutation.isPending}>Save</Button></DialogActions>
         </Box>
+        <SaveConfirmation open={approvedDraft !== null} pending={mutation.isPending} label="purchase"
+            onNo={() => setApprovedDraft(null)} onYes={() => {void saveApprovedDraft();}} />
     </Dialog>;
 }

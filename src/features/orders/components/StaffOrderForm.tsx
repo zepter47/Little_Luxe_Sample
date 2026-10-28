@@ -28,13 +28,17 @@ export default function StaffOrderForm({ onClose }: { onClose: () => void }) {
   const request = useRef({ payload: "", id: "" });
   const client = useQueryClient();
   const mutation = useMutation(createStaffOrderMutationOption(client));
+  const saving = useRef(false);
   async function submit() {
+    if (saving.current) return;
+    saving.current = true;
     const payload = JSON.stringify({customer, lines, notes});
     if (request.current.payload !== payload) request.current = {payload, id: crypto.randomUUID()};
     try {
       await mutation.mutateAsync({customerId: customer, items: lines, requestId: request.current.id, notes});
       onClose();
     } catch { /* Keep the form open and preserve the idempotency key on retry. */ }
+    finally {saving.current = false;}
   }
   const names = Object.fromEntries(
     (options.data || []).map((i) => [i.item_id, i.item_name]),

@@ -1,4 +1,3 @@
 import { createFileRoute } from "@tanstack/react-router";
-import SupplierDatagrid from "../../features/suppliers/components/supplierDatagrid";
-export const Route = createFileRoute("/admin/suppliers")({component: SupplierDatagrid});
-
+import Suppliers from "../../features/suppliers/Suppliers";
+export const Route = createFileRoute("/admin/suppliers")({component: Suppliers});

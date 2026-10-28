@@ -1,7 +1,7 @@
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { Button } from "@mui/material";
 import type { item } from "../item.types";
-import type { Unit } from "../../units/unit.query";
+import type { Unit } from "../../units/unit.types";
 import type { category } from "../../Categories/category.types";
 
 export default function ItemDatagrid({items, categories, units, onEdit}: {items: item[]; categories: category[]; units: Unit[]; onEdit: (item: item) => void}) {

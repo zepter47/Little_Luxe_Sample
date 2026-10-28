@@ -1,6 +1,6 @@
 import { z } from "zod";
 
 export const categorySchema = z.object({
-    category: z.string().min(1, "The category should be included"),
-    categoryDescription: z.string()
+    category_name: z.string().trim().min(1, "Please enter category name."),
+    category_notes: z.string().trim(),
 });

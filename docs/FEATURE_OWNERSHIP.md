@@ -12,10 +12,10 @@ and React Query as libraries does not create a shared application component.
 | Feature | Entry screen | Data and validation |
 | --- | --- | --- |
 | Items | `items/Items.tsx` | `item.api.ts`, `item.query.ts`, `item.schema.ts`, `item.types.ts` |
-| Categories | `Categories/Components/categoryDatagrid.tsx` | `category.api.ts`, `category.query.ts`, `category.schema.ts`, `category.types.ts` |
-| Units | `units/components/unitDatagrid.tsx` | `unit.api.ts`, `unit.query.ts` |
-| Suppliers | `suppliers/components/supplierDatagrid.tsx` | `supplier.api.ts`, `supplier.query.ts`, `supplier.types.ts` |
-| Customers | `customers/Customers.tsx` | `customer.api.ts` |
+| Categories | `Categories/Categories.tsx` | `category.api.ts`, `category.query.ts`, `category.schema.ts`, `category.types.ts` |
+| Units | `units/Units.tsx` | `unit.api.ts`, `unit.query.ts`, `unit.schema.ts`, `unit.types.ts` |
+| Suppliers | `suppliers/Suppliers.tsx` | `supplier.api.ts`, `supplier.query.ts`, `supplier.schema.ts`, `supplier.types.ts`; supplier categories have their own form/schema/query |
+| Customers | `customers/Customers.tsx` | `customer.api.ts`, `customer.query.ts`, `customer.schema.ts`, `customer.types.ts` |
 | Purchases | `purchases/Purchases.tsx` | `purchase.api.ts`, `purchase.query.ts`, `purchase.schema.ts`, `purchase.types.ts` |
 | Orders | `orders/OrderDashboard.tsx` | `order.api.ts`, `order.query.ts`, `order.schema.ts`, `order.types.ts`, `order.model.ts`, `order.errors.ts` |
 | Returns | `returns/Returns.tsx` | UI placeholder only; no data access or workflow |
@@ -23,6 +23,29 @@ and React Query as libraries does not create a shared application component.
 All paths in the table are relative to `src/features`. Feature components live
 in their own `components` directory (`Components` for the existing categories
 feature). Admin no longer exports a record manager, item screen, or list UI.
+
+## Form and list responsibilities
+
+Categories, units, customers, suppliers, and supplier categories use explicit,
+feature-specific forms with React Hook Form and Zod. No `Records` manager or
+runtime field configuration remains. Screens load data and open forms; lists
+receive typed rows and edit callbacks; forms manage input and validation;
+`*.query.ts` configures mutations and cache refreshes; `*.api.ts` owns database
+operations. The legacy `/category` URL uses the same category form.
+
+## Approval before writes
+
+Every create/update submission in Admin and Stock Management requires a Yes/No
+dialog before its API write. Validation runs before approval. No dismisses the
+approval without discarding the draft. Yes saves the validated draft; pending
+writes disable inputs/actions and repeated Yes clicks are guarded. Failed saves
+keep the form open and require fresh approval before a retry.
+
+This covers categories, units, customers, suppliers, supplier categories, items
+(including images saved with an item), purchase creation, purchase header edits,
+staff orders, and order status changes. Opening a form or editing unsaved inputs
+does not write data. Confirmation components are owned by their respective
+features. Returns remains UI-only.
 
 ## Workflow boundaries
 
@@ -45,9 +68,13 @@ feature). Admin no longer exports a record manager, item screen, or list UI.
 `npm test` includes feature import-boundary checks, purchase validation/API
 checks, order rules/cache checks, and item responsive-list checks.
 
+`tests/adminForms.browser.py` verifies add/edit approvals for every admin form,
+No without writes, required-field/email validation, typed edit defaults, and
+failed-save draft retention.
+
 `tests/stockFeatures.browser.py` exercises purchase validation, draft retention
 after a failed save, retry payloads, header edits, read-only details, responsive
-search, and the UI-only returns boundary (no API requests or active actions).
+search, purchase Yes/No approvals, and the UI-only returns boundary (no API requests or active actions).
 It uses mocked APIs only.
 The existing `orders.browser.py` and `cart.browser.py` cover the retained order
 and checkout workflows. Build/preview with the test settings documented there.

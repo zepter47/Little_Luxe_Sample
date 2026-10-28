@@ -1,16 +1,13 @@
-import { CreateCategoryAsync, getCategoryNameAsync } from "./category.api";
-import { mutationOptions, queryOptions } from "@tanstack/react-query";
-import { categoryKeys } from "./category.types";
+import { mutationOptions, queryOptions, type QueryClient } from "@tanstack/react-query";
+import { getCategoryNameAsync, saveCategoryAsync } from "./category.api";
+import { categoryKeys, type CategoryFormData } from "./category.types";
 
-//Creating a category
-export const addCategoryMutationOption = () => 
-    mutationOptions({
-        mutationFn: CreateCategoryAsync
-    })
-
-//Querying category to retrieve only the names column
-export const getCategoryNameQueryOption = () =>
-    queryOptions({
-        queryKey: categoryKeys.categoryNamesKey,
-        queryFn: getCategoryNameAsync
-    })
+export const getCategoryNameQueryOption = () => queryOptions({
+    queryKey: categoryKeys.categoryNamesKey, queryFn: getCategoryNameAsync,
+});
+export const saveCategoryMutationOption = (client: QueryClient) => mutationOptions({
+    mutationFn: ({id, values}: {id?: string; values: CategoryFormData}) => saveCategoryAsync({
+        item_category_id: id, category_name: values.category_name, category_notes: values.category_notes,
+    }),
+    onSuccess: () => client.invalidateQueries({queryKey: categoryKeys.categoryNamesKey}),
+});

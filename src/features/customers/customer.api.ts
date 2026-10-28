@@ -1,3 +1,4 @@
+import type { CustomerFormData } from "./customer.types";
 import { supabase } from "../../lib/supabase";
 export async function getCustomers() {
   const { data, error } = await supabase
@@ -8,7 +9,7 @@ export async function getCustomers() {
   return data;
 }
 export async function saveCustomer(
-  values: Record<string, string>,
+  values: CustomerFormData,
   id?: string,
 ) {
   const { data, error } = await supabase.rpc("save_customer", {
@@ -19,7 +20,7 @@ export async function saveCustomer(
     p_phone_number: values.phone_number,
     p_address: values.address,
     p_customer_notes: values.customer_notes,
-    p_is_active: values.is_active !== "false",
+    p_is_active: values.is_active,
   });
   if (error) throw error;
   return data;
