@@ -21,10 +21,11 @@ export default function ItemCollection() {
             <Typography variant="h6">Something lovely is on its way.</Typography>
             <Typography color="text.secondary">Our collection will appear here as soon as items are added.</Typography>
         </Box>}
-        <Box sx={{display: "grid", gridTemplateColumns: {xs: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(3, 1fr)"}, gap: 3}}>
+        <Box sx={{display: "grid", gridTemplateColumns: {xs: "repeat(2, minmax(0, 1fr))", lg: "repeat(3, minmax(0, 1fr))"}, gap: {xs: 1.5, sm: 3}}}>
             {items.data?.map(item => <ItemCard key={item.item_id} item={item}
                 category={categories.data?.find(category => category.item_category_id === item.item_category_id)?.category_name} />)}
         </Box>
     </Box>;
 }
+
 
