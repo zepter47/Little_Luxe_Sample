@@ -1,0 +1,1 @@
+var e={all:[`orders`],list:(e,t,n)=>[`orders`,`list`,e,t,n],details:(e,t)=>[`orders`,`details`,e,t],timeline:(e,t,n)=>[`orders`,`timeline`,e,t,n],items:[`orders`,`items`],customers:[`orders`,`customers`]};export{e as t};
