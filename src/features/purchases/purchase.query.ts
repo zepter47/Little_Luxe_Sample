@@ -1,6 +1,6 @@
 import { mutationOptions, queryOptions, type QueryClient } from '@tanstack/react-query';
 import { itemKeys } from '../items/item.types';
-import { createPurchaseAsync, getPurchaseDetailsAsync, getPurchaseOptionsAsync, getPurchasesAsync, updatePurchaseAsync } from './purchase.api';
+import { createPurchaseAsync, getPurchaseDetailsAsync, getPurchaseOptionsAsync, getPurchasePeopleAsync, getPurchasesAsync, updatePurchaseAsync } from './purchase.api';
 import { purchaseKeys } from './purchase.types';
 
 export const createPurchaseMutationOption = (queryClient: QueryClient) => mutationOptions({
@@ -16,6 +16,12 @@ export const createPurchaseMutationOption = (queryClient: QueryClient) => mutati
 });
 
 export const getPurchasesQueryOption = () => queryOptions({queryKey: purchaseKeys.all, queryFn: getPurchasesAsync});
+export const getPurchasePeopleQueryOption = (userId: string, ids: (string | null | undefined)[]) => {
+    const unique = [...new Set(ids.filter((id): id is string => !!id))].sort();
+    return queryOptions({queryKey: [...purchaseKeys.all, 'people', userId, unique],
+        queryFn: () => getPurchasePeopleAsync(unique), enabled: !!userId && !!unique.length,
+    });
+};
 export const getPurchaseDetailsQueryOption = (id: string) => queryOptions({
     queryKey: purchaseKeys.details(id), queryFn: () => getPurchaseDetailsAsync(id), enabled: !!id,
 });

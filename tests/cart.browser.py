@@ -32,8 +32,9 @@ def api(route):
     elif '/auth/v1/user' in path: result = user
     elif '/auth/v1/logout' in path: result = {}
     elif '/rest/v1/item_category' in path: result = []
+    elif '/rest/v1/item_images' in path: result = []
     elif '/rest/v1/item' in path: result = [product]
-    elif '/rest/v1/rpc/get_storefront_items' in path: result = [product]
+    elif '/rest/v1/rpc/get_storefront_items' in path: result = product if 'item_id=eq.' in path else [product]
     elif '/rest/v1/rpc/create_online_order' in path:
         body = route.request.post_data_json
         requests.append(body)
@@ -70,10 +71,12 @@ with sync_playwright() as p:
                   dict(access_token=token,refresh_token='test-refresh',expires_in=3600,expires_at=int(time.time())+3600,token_type='bearer',user=user))
     page.goto(base_url)
     page.get_by_role('link',name='Home',exact=True).click()
-    page.get_by_role('button',name='View details for Floral Dress',exact=True).click()
+    page.get_by_role('link',name='View details for Floral Dress',exact=True).click()
+    expect(page).to_have_url(base_url+'items/'+ITEM)
     expect(page.get_by_text(product['product_notes'],exact=True)).to_be_visible()
     page.get_by_role('button',name='Add to cart',exact=True).click()
     expect(page.get_by_text('Added to your cart.',exact=True)).to_be_visible()
+    page.get_by_role('link',name='Back to collection',exact=True).click()
     page.get_by_role('button',name='Add Floral Dress to cart',exact=True).click()
     expect(page.get_by_text('This item is already in your cart. Change its quantity in the cart.',exact=True)).to_be_visible()
     page.locator('nav a[href$="/cart"]').click()

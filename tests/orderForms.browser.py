@@ -60,7 +60,8 @@ def api(route):
         events.append(dict(history_id=2,order_id=ORDER,previous_status=old,new_status=body['p_new_status'],changed_by=STAFF,actor_type='staff',change_source='staff_action',reason_code='cash_received',reason_notes=None,changed_on='2026-10-27T08:01:00Z'))
         result=dict(outcome='updated',order_status=body['p_new_status'])
     elif '/rest/v1/rpc/get_order_timeline' in path:result=[{k:e[k] for k in ('history_id','previous_status','new_status','changed_on')} for e in events]
-    elif '/rest/v1/customer' in path:result=customers
+    elif '/rest/v1/customer' in path:
+        result=([dict(customer_id=STAFF,first_name='Jane',last_name='Staff',email='jane@example.test')]+customers) if 'customer_id=in.' in path else customers
     elif '/rest/v1/order_status_history' in path:result=events
     elif '/rest/v1/order_details' in path:result=[dict(order_details_id='55555555-5555-4555-8555-555555555555',order_id=ORDER,item_id=ITEM,quantity_sold=created[0]["quantity"],sale_price=created[0]["sale_price"],batch_number=None,expiry_date=None,item=dict(item_name='Floral Dress'))]
     elif '/rest/v1/order?' in path:

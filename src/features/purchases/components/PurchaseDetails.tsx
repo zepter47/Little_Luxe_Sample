@@ -9,7 +9,7 @@ export default function PurchaseDetails({purchase, items, onClose}: {
     purchase: Purchase; items: {item_id: string; item_name: string}[]; onClose: () => void;
 }) {
     const query = useQuery(getPurchaseDetailsQueryOption(purchase.purchase_id));
-    const itemName = (line: PurchaseDetail) => items.find(item => item.item_id === line.item_id)?.item_name || line.item_id || 'Item unavailable';
+    const itemName = (line: PurchaseDetail) => items.find(item => item.item_id === line.item_id)?.item_name || 'Item unavailable';
     const columns: GridColDef<PurchaseDetail>[] = [
         {field: 'item_id', headerName: 'Item', flex: 1, minWidth: 170, valueGetter: (_, row) => itemName(row)},
         {field: 'quantity_bought', headerName: 'Quantity bought', type: 'number', width: 150},

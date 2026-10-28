@@ -1,19 +1,12 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Alert, Box, Button, CircularProgress, Stack, Typography } from "@mui/material";
-import AddToCartButton from "../../features/cart/AddToCartButton";
 import { useState } from "react";
-import { getItemImagesQueryOption, getItemQueryOption } from "../../features/items/item.query";
-import { getItemImageUrl } from "../../services/itemImages";
+import { Alert, Box, Button, CircularProgress, Stack, Typography } from "@mui/material";
+import AddToCartButton from "../../cart/AddToCartButton";
+import { getItemImagesQueryOption, getItemQueryOption } from "../item.query";
+import { getItemImageUrl } from "../../../services/itemImages";
 
-export const Route = createFileRoute("/products/$productId")({component: ProductDetailPage});
-
-function ProductDetailPage() {
-    const {productId} = Route.useParams();
-    return <ProductDetails key={productId} itemId={productId} />;
-}
-
-function ProductDetails({itemId}: {itemId: string}) {
+export default function ItemDetails({itemId}: {itemId: string}) {
     const product = useQuery(getItemQueryOption(itemId));
     const gallery = useQuery({...getItemImagesQueryOption(itemId), enabled: !!product.data});
     const [selected, setSelected] = useState<string>();

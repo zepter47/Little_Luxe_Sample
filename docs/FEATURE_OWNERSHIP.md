@@ -2,7 +2,9 @@
 
 Admin (`src/routes/admin.tsx`) and Stock Management
 (`src/features/stock/StockManagement.tsx`) own navigation and select their child
-screens. They do not define child forms, database operations, or queries.
+screens through TanStack Router links and an Outlet. They do not define child
+forms, database operations, or queries. Stock Management follows the admin
+layout: a guarded parent route plus index, purchases, and returns child routes.
 
 Each feature owns its application UI, field markup, responsive list behavior,
 and styles. The similar implementations are intentionally independent: changing
@@ -31,7 +33,7 @@ feature-specific forms with React Hook Form and Zod. No `Records` manager or
 runtime field configuration remains. Screens load data and open forms; lists
 receive typed rows and edit callbacks; forms manage input and validation;
 `*.query.ts` configures mutations and cache refreshes; `*.api.ts` owns database
-operations. The legacy `/category` URL uses the same category form.
+operations. The learning `/category` and `/products` routes are removed.
 
 ## Approval before writes
 
@@ -46,6 +48,22 @@ This covers categories, units, customers, suppliers, supplier categories, items
 staff orders, and order status changes. Opening a form or editing unsaved inputs
 does not write data. Confirmation components are owned by their respective
 features. Returns remains UI-only.
+
+## Item navigation and person labels
+
+Storefront cards link directly to `/items/$itemId`. The item-owned `ItemDetails`
+component displays the selected item, profile/gallery images, and description.
+Cards no longer expand or expose an extra title/gallery button. Their existing
+cart icon remains separate from the card link.
+
+Order summaries, staff history, purchase lists, and customer lists display
+available first/last names, otherwise email. Missing details use a neutral label,
+never a person UUID. Order and purchase references and internal relational IDs
+remain unchanged. Each feature owns its display formatting and batched lookup.
+Lookups select only ID/name/email columns from the existing public customer
+records, use viewer-scoped query keys, and retain RLS. Customers only request
+their order's customer identity; staff author/history details stay staff-only.
+No new directory, auth.users browser access, policies, or migrations are added.
 
 ## Workflow boundaries
 
@@ -91,5 +109,9 @@ confirmation cancellation, failed-save retention, retry request IDs, price
 refresh, decline reason validation, and fresh defaults for a new status action.
 The existing `orders.browser.py` and `cart.browser.py` cover the retained order
 and checkout workflows. Build/preview with the test settings documented there.
+
+`tests/routesAndPeople.browser.py` verifies item URL selection, gallery changes,
+reload/not-found behavior, stock deep links/back navigation, inherited auth
+checks, and first/last-name or email rendering without person UUIDs.
 
 `npm run test:orders` runs the existing local PGlite database workflow suite.

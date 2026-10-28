@@ -9,6 +9,7 @@ export type OrderItem = {
   sale_price: number;
 };
 export type OrderRow = Database["public"]["Tables"]["order"]["Row"];
+export type OrderPerson = Pick<Database["public"]["Tables"]["customer"]["Row"], "customer_id" | "first_name" | "last_name" | "email">;
 export type StaffOrderFormData = z.infer<typeof staffOrderSchema>;
 export type OrderStatusFormData = z.infer<typeof orderStatusSchema>;
 export type OrderDetail = Database["public"]["Tables"]["order_details"]["Row"] & {item: {item_name: string} | null};

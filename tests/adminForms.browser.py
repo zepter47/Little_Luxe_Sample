@@ -140,7 +140,7 @@ with sync_playwright() as p:
     expect(page.get_by_role('textbox', name='First name', exact=False)).to_have_value('Walk')
     approve(page)
     expect(page.get_by_role('dialog')).to_have_count(0)
-    page.get_by_role('button', name='Edit Walk', exact=True).click()
+    page.get_by_role('button', name='Edit Walk In', exact=True).click()
     page.get_by_role('checkbox', name='Active', exact=True).uncheck()
     approve(page)
     expect(page.get_by_role('dialog')).to_have_count(0)

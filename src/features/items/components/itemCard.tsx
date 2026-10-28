@@ -1,15 +1,16 @@
-import { Box, Button, Card, CardActionArea, CardContent, Chip, Collapse, SvgIcon, Typography } from "@mui/material";
-import { Link } from "@tanstack/react-router";
+import { Box, Card, CardActionArea, CardContent, Chip, SvgIcon, Typography } from "@mui/material";
+import { createLink } from "@tanstack/react-router";
 import { useState } from "react";
 import AddToCartButton from "../../cart/AddToCartButton";
 import { getCartImage } from "../../cart/image";
 import type { StorefrontItem } from "../item.types";
 
+const ItemCardLink = createLink(CardActionArea);
+
 export default function ItemCard({item, category}: {item: StorefrontItem; category?: string}) {
-    const [expanded, setExpanded] = useState(false);
     const [failedImage, setFailedImage] = useState<string | null>(null);
     return <Card variant="outlined" sx={{borderRadius: 4, overflow: "hidden", height: "100%"}}>
-        <CardActionArea aria-label={`View details for ${item.item_name}`} aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
+        <ItemCardLink to="/items/$itemId" params={{itemId: item.item_id}} aria-label={`View details for ${item.item_name}`}>
         <Box sx={{aspectRatio: "4 / 3", bgcolor: "#f5eee9", display: "grid", placeItems: "center"}}>
             {item.image_path && failedImage !== item.image_path
                 ? <Box component="img" src={getCartImage(item.image_path)} alt={item.item_name} onError={() => setFailedImage(item.image_path)}
@@ -21,15 +22,14 @@ export default function ItemCard({item, category}: {item: StorefrontItem; catego
                     <Typography variant="caption" sx={{display: "block"}}>Image coming soon</Typography>
                 </Box>}
         </Box>
-        </CardActionArea>
         <CardContent>
             {!item.is_stocked && <Chip label="Out of stock" size="small" color="warning" sx={{mb: 1}} />}
             {category && <Chip label={category} size="small" sx={{mb: 1, bgcolor: "#f5eee9"}} />}
-            <Button onClick={() => setExpanded(!expanded)} aria-expanded={expanded} sx={{textTransform: "none", p: 0, textAlign: "left"}}><Typography variant="h6" component="h3">{item.item_name}</Typography></Button>
-            <Collapse in={expanded}><Box sx={{my: 2}}><Typography color="text.secondary" sx={{mb: 2, whiteSpace: "pre-wrap"}}>{item.product_notes || "A little luxury for every day."}</Typography><AddToCartButton product={item} /><Box sx={{mt: 2}}><Link to="/products/$productId" params={{productId: item.item_id}}>View full gallery</Link></Box></Box></Collapse>
+            <Typography variant="h6" component="h3">{item.item_name}</Typography>
             <Typography sx={{mt: 2, fontWeight: 700, color: "#79543f"}}>{item.sale_price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</Typography>
-            <AddToCartButton product={item} icon />
         </CardContent>
+        </ItemCardLink>
+        <Box sx={{px: 2, pb: 2}}><AddToCartButton product={item} icon /></Box>
     </Card>;
 }
 

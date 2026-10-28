@@ -76,6 +76,8 @@ def api(route):
             result = dict(purchase_id=PURCHASE)
         else:
             result = purchases
+    elif '/rest/v1/customer?' in url:
+        result = [dict(customer_id=USER, first_name=None, last_name=None, email='staff@example.test')]
     elif '/rest/v1/item?' in url:
         result = [dict(item_id=ITEM, item_name='Floral Dress', sale_price=20)]
     elif '/rest/v1/supplier' in url:
@@ -105,7 +107,7 @@ with sync_playwright() as p:
     errors = []
     page.on('pageerror', lambda error: errors.append(str(error)))
     page.goto(BASE + 'stock-management')
-    page.get_by_role('button', name='Purchases', exact=True).click()
+    page.get_by_role('link', name='Purchases', exact=True).click()
     page.get_by_role('button', name='Add purchase', exact=True).click()
     page.get_by_role('button', name='Save purchase', exact=True).click()
     expect(page.get_by_text('Please enter an invoice number.', exact=True)).to_be_visible()
@@ -124,6 +126,7 @@ with sync_playwright() as p:
     expect(page.get_by_role('spinbutton', name='Quantity bought', exact=False)).to_have_value('2')
     save_with_approval(page, 'Save purchase')
     expect(page.get_by_text('Purchase and all item lines saved successfully.', exact=True)).to_be_visible()
+    expect(page.get_by_role('gridcell', name='staff@example.test', exact=True)).to_be_visible()
     assert len(create_calls) == 2 and create_calls[0] == create_calls[1]
     assert create_calls[-1]['p_items_json'][0]['quantity_bought'] == 2
     page.get_by_role('button', name='Select', exact=True).click()
@@ -145,7 +148,7 @@ with sync_playwright() as p:
     expect(page.get_by_text('No matching records.', exact=True)).to_be_visible()
     page.get_by_role('textbox', name='Search purchases', exact=True).fill('')
     request_count = len(requests)
-    page.get_by_role('button', name='Item returns', exact=True).click()
+    page.get_by_role('link', name='Item returns', exact=True).click()
     expect(page.get_by_role('heading', name='Item returns', exact=True)).to_be_visible()
     expect(page.get_by_text('Returns are not available yet.', exact=True)).to_be_visible()
     expect(page.get_by_role('button', name='Add item return', exact=True)).to_be_disabled()

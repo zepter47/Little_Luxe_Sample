@@ -88,3 +88,13 @@ export async function getOrderCustomersAsync() {
     if (error) throw error;
     return data;
 }
+
+// Public account/customer records already hold display names and emails.
+// This batched lookup retains the caller's existing row-level permissions.
+export async function getOrderPeopleAsync(ids: string[]) {
+    if (!ids.length) return [];
+    const {data, error} = await supabase.from("customer")
+        .select("customer_id,first_name,last_name,email").in("customer_id", ids);
+    if (error) throw error;
+    return data;
+}

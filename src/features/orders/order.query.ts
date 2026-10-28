@@ -1,5 +1,5 @@
 import { mutationOptions, queryOptions, type QueryClient } from "@tanstack/react-query";
-import { createStaffOrder, getOrderCustomersAsync, getOrderDetails, getOrderItemsAsync, getOrders, getTimeline, updateOrderStatus } from "./order.api";
+import { createStaffOrder, getOrderCustomersAsync, getOrderDetails, getOrderItemsAsync, getOrderPeopleAsync, getOrders, getTimeline, updateOrderStatus } from "./order.api";
 import { orderKeys, type OrderItem, type OrderStatus } from "./order.types";
 import { itemKeys } from "../items/item.types";
 
@@ -22,6 +22,12 @@ export const getOrderTimelineQueryOption = (userId: string, id: string, staff: b
 });
 export const getOrderItemsQueryOption = () => queryOptions({queryKey: orderKeys.items, queryFn: getOrderItemsAsync});
 export const getOrderCustomersQueryOption = () => queryOptions({queryKey: orderKeys.customers, queryFn: getOrderCustomersAsync});
+export const getOrderPeopleQueryOption = (userId: string, ids: (string | null | undefined)[]) => {
+    const unique = [...new Set(ids.filter((id): id is string => !!id))].sort();
+    return queryOptions({queryKey: [...orderKeys.all, "people", userId, unique],
+        queryFn: () => getOrderPeopleAsync(unique), enabled: !!userId && !!unique.length,
+    });
+};
 export const updateOrderStatusMutationOption = (client: QueryClient) => mutationOptions({
     mutationFn: ({orderId, status, reason}: {orderId: string; status: OrderStatus; reason: string}) => updateOrderStatus(orderId, status, reason),
     onSuccess: () => refreshOrders(client),

@@ -13,7 +13,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CartRouteImport } from './routes/cart'
-import { Route as CategoryRouteImport } from './routes/category'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ProfileRouteImport } from './routes/profile'
@@ -24,8 +23,10 @@ import { Route as AdminCustomersRouteImport } from './routes/admin/customers'
 import { Route as AdminSuppliersRouteImport } from './routes/admin/suppliers'
 import { Route as AdminUnitsRouteImport } from './routes/admin/units'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
-import { Route as ProductsIndexRouteImport } from './routes/products/index'
-import { Route as ProductsProductIdRouteImport } from './routes/products/$productId'
+import { Route as ItemsItemIdRouteImport } from './routes/items/$itemId'
+import { Route as StockManagementIndexRouteImport } from './routes/stock-management/index'
+import { Route as StockManagementPurchasesRouteImport } from './routes/stock-management/purchases'
+import { Route as StockManagementReturnsRouteImport } from './routes/stock-management/returns'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -45,11 +46,6 @@ const AdminRoute = AdminRouteImport.update({
 const CartRoute = CartRouteImport.update({
   id: '/cart',
   path: '/cart',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CategoryRoute = CategoryRouteImport.update({
-  id: '/category',
-  path: '/category',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -102,15 +98,26 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProductsIndexRoute = ProductsIndexRouteImport.update({
-  id: '/products/',
-  path: '/products/',
+const ItemsItemIdRoute = ItemsItemIdRouteImport.update({
+  id: '/items/$itemId',
+  path: '/items/$itemId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProductsProductIdRoute = ProductsProductIdRouteImport.update({
-  id: '/products/$productId',
-  path: '/products/$productId',
-  getParentRoute: () => rootRouteImport,
+const StockManagementIndexRoute = StockManagementIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => StockManagementRoute,
+} as any)
+const StockManagementPurchasesRoute =
+  StockManagementPurchasesRouteImport.update({
+    id: '/purchases',
+    path: '/purchases',
+    getParentRoute: () => StockManagementRoute,
+  } as any)
+const StockManagementReturnsRoute = StockManagementReturnsRouteImport.update({
+  id: '/returns',
+  path: '/returns',
+  getParentRoute: () => StockManagementRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -118,37 +125,38 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/cart': typeof CartRoute
-  '/category': typeof CategoryRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
-  '/stock-management': typeof StockManagementRoute
+  '/stock-management': typeof StockManagementRouteWithChildren
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/suppliers': typeof AdminSuppliersRoute
   '/admin/units': typeof AdminUnitsRoute
   '/auth/callback': typeof AuthCallbackRoute
-  '/products/$productId': typeof ProductsProductIdRoute
+  '/items/$itemId': typeof ItemsItemIdRoute
+  '/stock-management/purchases': typeof StockManagementPurchasesRoute
+  '/stock-management/returns': typeof StockManagementReturnsRoute
   '/admin/': typeof AdminIndexRoute
-  '/products/': typeof ProductsIndexRoute
+  '/stock-management/': typeof StockManagementIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/cart': typeof CartRoute
-  '/category': typeof CategoryRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
-  '/stock-management': typeof StockManagementRoute
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/suppliers': typeof AdminSuppliersRoute
   '/admin/units': typeof AdminUnitsRoute
   '/auth/callback': typeof AuthCallbackRoute
-  '/products/$productId': typeof ProductsProductIdRoute
+  '/items/$itemId': typeof ItemsItemIdRoute
+  '/stock-management/purchases': typeof StockManagementPurchasesRoute
+  '/stock-management/returns': typeof StockManagementReturnsRoute
   '/admin': typeof AdminIndexRoute
-  '/products': typeof ProductsIndexRoute
+  '/stock-management': typeof StockManagementIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -156,19 +164,20 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/cart': typeof CartRoute
-  '/category': typeof CategoryRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRoute
-  '/stock-management': typeof StockManagementRoute
+  '/stock-management': typeof StockManagementRouteWithChildren
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/suppliers': typeof AdminSuppliersRoute
   '/admin/units': typeof AdminUnitsRoute
   '/auth/callback': typeof AuthCallbackRoute
-  '/products/$productId': typeof ProductsProductIdRoute
+  '/items/$itemId': typeof ItemsItemIdRoute
+  '/stock-management/purchases': typeof StockManagementPurchasesRoute
+  '/stock-management/returns': typeof StockManagementReturnsRoute
   '/admin/': typeof AdminIndexRoute
-  '/products/': typeof ProductsIndexRoute
+  '/stock-management/': typeof StockManagementIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -177,7 +186,6 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/cart'
-    | '/category'
     | '/dashboard'
     | '/login'
     | '/profile'
@@ -187,34 +195,35 @@ export interface FileRouteTypes {
     | '/admin/suppliers'
     | '/admin/units'
     | '/auth/callback'
-    | '/products/$productId'
+    | '/items/$itemId'
+    | '/stock-management/purchases'
+    | '/stock-management/returns'
     | '/admin/'
-    | '/products/'
+    | '/stock-management/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
     | '/cart'
-    | '/category'
     | '/dashboard'
     | '/login'
     | '/profile'
-    | '/stock-management'
     | '/admin/categories'
     | '/admin/customers'
     | '/admin/suppliers'
     | '/admin/units'
     | '/auth/callback'
-    | '/products/$productId'
+    | '/items/$itemId'
+    | '/stock-management/purchases'
+    | '/stock-management/returns'
     | '/admin'
-    | '/products'
+    | '/stock-management'
   id:
     | '__root__'
     | '/'
     | '/about'
     | '/admin'
     | '/cart'
-    | '/category'
     | '/dashboard'
     | '/login'
     | '/profile'
@@ -224,9 +233,11 @@ export interface FileRouteTypes {
     | '/admin/suppliers'
     | '/admin/units'
     | '/auth/callback'
-    | '/products/$productId'
+    | '/items/$itemId'
+    | '/stock-management/purchases'
+    | '/stock-management/returns'
     | '/admin/'
-    | '/products/'
+    | '/stock-management/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -234,14 +245,12 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRouteWithChildren
   CartRoute: typeof CartRoute
-  CategoryRoute: typeof CategoryRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
   ProfileRoute: typeof ProfileRoute
-  StockManagementRoute: typeof StockManagementRoute
+  StockManagementRoute: typeof StockManagementRouteWithChildren
   AuthCallbackRoute: typeof AuthCallbackRoute
-  ProductsProductIdRoute: typeof ProductsProductIdRoute
-  ProductsIndexRoute: typeof ProductsIndexRoute
+  ItemsItemIdRoute: typeof ItemsItemIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -272,13 +281,6 @@ declare module '@tanstack/react-router' {
       path: '/cart'
       fullPath: '/cart'
       preLoaderRoute: typeof CartRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/category': {
-      id: '/category'
-      path: '/category'
-      fullPath: '/category'
-      preLoaderRoute: typeof CategoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -351,19 +353,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/products/': {
-      id: '/products/'
-      path: '/products'
-      fullPath: '/products/'
-      preLoaderRoute: typeof ProductsIndexRouteImport
+    '/items/$itemId': {
+      id: '/items/$itemId'
+      path: '/items/$itemId'
+      fullPath: '/items/$itemId'
+      preLoaderRoute: typeof ItemsItemIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/products/$productId': {
-      id: '/products/$productId'
-      path: '/products/$productId'
-      fullPath: '/products/$productId'
-      preLoaderRoute: typeof ProductsProductIdRouteImport
-      parentRoute: typeof rootRouteImport
+    '/stock-management/': {
+      id: '/stock-management/'
+      path: '/'
+      fullPath: '/stock-management/'
+      preLoaderRoute: typeof StockManagementIndexRouteImport
+      parentRoute: typeof StockManagementRoute
+    }
+    '/stock-management/purchases': {
+      id: '/stock-management/purchases'
+      path: '/purchases'
+      fullPath: '/stock-management/purchases'
+      preLoaderRoute: typeof StockManagementPurchasesRouteImport
+      parentRoute: typeof StockManagementRoute
+    }
+    '/stock-management/returns': {
+      id: '/stock-management/returns'
+      path: '/returns'
+      fullPath: '/stock-management/returns'
+      preLoaderRoute: typeof StockManagementReturnsRouteImport
+      parentRoute: typeof StockManagementRoute
     }
   }
 }
@@ -386,19 +402,33 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface StockManagementRouteChildren {
+  StockManagementPurchasesRoute: typeof StockManagementPurchasesRoute
+  StockManagementReturnsRoute: typeof StockManagementReturnsRoute
+  StockManagementIndexRoute: typeof StockManagementIndexRoute
+}
+
+const StockManagementRouteChildren: StockManagementRouteChildren = {
+  StockManagementPurchasesRoute: StockManagementPurchasesRoute,
+  StockManagementReturnsRoute: StockManagementReturnsRoute,
+  StockManagementIndexRoute: StockManagementIndexRoute,
+}
+
+const StockManagementRouteWithChildren = StockManagementRoute._addFileChildren(
+  StockManagementRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AdminRoute: AdminRouteWithChildren,
   CartRoute: CartRoute,
-  CategoryRoute: CategoryRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
   ProfileRoute: ProfileRoute,
-  StockManagementRoute: StockManagementRoute,
+  StockManagementRoute: StockManagementRouteWithChildren,
   AuthCallbackRoute: AuthCallbackRoute,
-  ProductsProductIdRoute: ProductsProductIdRoute,
-  ProductsIndexRoute: ProductsIndexRoute,
+  ItemsItemIdRoute: ItemsItemIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

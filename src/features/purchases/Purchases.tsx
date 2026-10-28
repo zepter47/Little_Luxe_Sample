@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Alert, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material';
-import { getPurchaseOptionsQueryOption, getPurchasesQueryOption } from './purchase.query';
+import { getPurchaseOptionsQueryOption, getPurchasePeopleQueryOption, getPurchasesQueryOption } from './purchase.query';
+import { useAuth } from '../auth/auth';
 import type { Purchase } from './purchase.types';
 import PurchaseForm from './components/PurchaseForm';
 import PurchaseHeaderForm from './components/PurchaseHeaderForm';
@@ -9,8 +10,10 @@ import PurchaseList from './components/PurchaseList';
 import PurchaseDetails from './components/PurchaseDetails';
 
 export default function Purchases() {
+    const {user} = useAuth();
     const query = useQuery(getPurchasesQueryOption());
     const options = useQuery(getPurchaseOptionsQueryOption());
+    const people = useQuery(getPurchasePeopleQueryOption(user?.id || '', (query.data || []).map(row => row.added_by)));
     const [creating, setCreating] = useState(false);
     const [editing, setEditing] = useState<Purchase | null>(null);
     const [selected, setSelected] = useState<Purchase | null>(null);
@@ -25,7 +28,8 @@ export default function Purchases() {
         <Typography component="h2" variant="h5">Purchases</Typography>
         <Button variant="contained" onClick={() => {setSaved(false); setCreating(true);}}>Add purchase</Button>
         {saved && <Alert severity="success">Purchase and all item lines saved successfully.</Alert>}
-        <PurchaseList purchases={query.data || []} suppliers={options.data.suppliers} onSelect={setSelected} onEdit={setEditing} />
+        {people.error && <Alert severity="warning">Some staff names could not be loaded.<Button onClick={() => {void people.refetch();}}>Retry names</Button></Alert>}
+        <PurchaseList purchases={query.data || []} suppliers={options.data.suppliers} people={people.data || []} onSelect={setSelected} onEdit={setEditing} />
         {creating && <PurchaseForm {...options.data} onClose={() => setCreating(false)} onSaved={() => {setCreating(false); setSaved(true);}} />}
         {editing && <PurchaseHeaderForm purchase={editing} suppliers={options.data.suppliers} onClose={() => setEditing(null)} />}
     </Stack></Paper>;

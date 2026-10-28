@@ -1,6 +1,14 @@
 import { supabase } from '../../lib/supabase';
 import type { CreatePurchaseInput, PurchaseHeaderInput } from './purchase.types';
 
+export async function getPurchasePeopleAsync(ids: string[]) {
+    if (!ids.length) return [];
+    const {data, error} = await supabase.from('customer')
+        .select('customer_id,first_name,last_name,email').in('customer_id', ids);
+    if (error) throw error;
+    return data;
+}
+
 export async function getPurchasesAsync() {
     const {data, error} = await supabase.from('purchase')
         .select('*, summary:purchase_details(quantity_bought)').order('added_on', {ascending: false});

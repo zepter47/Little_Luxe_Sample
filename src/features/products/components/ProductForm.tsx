@@ -52,7 +52,7 @@ export default function ProductForm(){
     return(
         <>
             <Box component="section" sx={styles.layout}>
-                <Button onClick={async() => await navigate({to:"/category"
+                <Button onClick={async() => await navigate({to:"/admin/categories"
 
                 })}>
                     Add Category

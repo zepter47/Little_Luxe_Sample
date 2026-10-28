@@ -17,5 +17,6 @@ export const purchaseKeys = {
 };
 
 export type Purchase = Tables<'purchase'> & {summary: {quantity_bought: number | null}[]};
+export type PurchasePerson = Pick<Tables<'customer'>, 'customer_id' | 'first_name' | 'last_name' | 'email'>;
 export type PurchaseDetail = Tables<'purchase_details'>;
 export type PurchaseHeaderInput = Pick<newPurchase, 'invoice_number' | 'supplier_id' | 'purchase_notes'>;

@@ -1,4 +1,11 @@
-Stock Management owns navigation only. It selects Orders, Purchases, or Item returns.
+Stock Management owns navigation only. Like admin, its guarded parent route
+renders navigation and an Outlet for child routes:
+
+- /stock-management: delivered orders (index)
+- /stock-management/purchases: purchases
+- /stock-management/returns: UI-only returns
+
+Links preserve selection in the URL, including reloads and browser history.
 
 Purchases and orders own their API, query configuration, types, validation,
 forms, lists, detail views, and styles. Returns currently contains UI only.

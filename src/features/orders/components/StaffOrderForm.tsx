@@ -8,6 +8,7 @@ import OrderIssues from "./OrderIssues";
 import StaffOrderLines from "./StaffOrderLines";
 import StaffOrderConfirmation from "./StaffOrderConfirmation";
 import { staffOrderSchema } from "../order.schema";
+import { orderPersonName } from "../order.model";
 import type { StaffOrderFormData } from "../order.types";
 import { createStaffOrderMutationOption, getOrderCustomersQueryOption, getOrderItemsQueryOption } from "../order.query";
 
@@ -58,7 +59,7 @@ export default function StaffOrderForm({onClose}: {onClose: () => void}) {
             <LabeledTextField {...field} inputRef={ref} label="Customer" select required fullWidth disabled={pending || customers.isPending}
               error={!!fieldState.error} helperText={fieldState.error?.message}>
               {customers.data?.filter(customer => customer.is_active).map(customer => <MenuItem key={customer.customer_id} value={customer.customer_id}>
-                {[customer.first_name, customer.last_name].filter(Boolean).join(" ") || customer.email || "Customer"} · {customer.phone_number || customer.email || customer.customer_id}
+                {orderPersonName(customer, "Customer details unavailable")}{customer.phone_number ? ` · ${customer.phone_number}` : ""}
               </MenuItem>)}
             </LabeledTextField>} />
           {customers.isSuccess && !customers.data.some(customer => customer.is_active) && <Alert severity="info">Add an active customer in the Customers tab first.</Alert>}
