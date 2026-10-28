@@ -12,22 +12,32 @@ import { styles } from "./components/Item.styles";
 
 export default function Items() {
     const {user} = useAuth();
+    if (!user) return null;
+    // A different account must never inherit an open form or the previous draft.
+    return <ItemPanel key={user.id} userId={user.id} />;
+}
+
+function ItemPanel({userId}: {userId: string}) {
     const [includeInactive, setIncludeInactive] = useState(false);
-    const items = useQuery(getAdminItemsQueryOption(includeInactive, user?.id || ""));
+    const items = useQuery(getAdminItemsQueryOption(includeInactive, userId));
     const categories = useQuery(getCategoryNameQueryOption());
     const units = useQuery(getUnitsQueryOption());
     const [editing, setEditing] = useState<AdminItem | null | undefined>(undefined);
     const [imageWarning, setImageWarning] = useState("");
     const [saved, setSaved] = useState(false);
-    if (items.isPending || categories.isPending || units.isPending) return <CircularProgress aria-label="Loading items" />;
+    const loading = items.isPending || categories.isPending || units.isPending;
     const error = items.error || categories.error || units.error;
-    if (error) return <Alert severity="error">{error.message}<Button onClick={() => {void items.refetch(); void categories.refetch(); void units.refetch();}}>Retry</Button></Alert>;
+    const retry = () => {void items.refetch(); void categories.refetch(); void units.refetch();};
+    // Refreshing lists must not unmount an open form and discard selected files.
+    if (editing === undefined && loading) return <CircularProgress aria-label="Loading items" />;
+    if (editing === undefined && error) return <Alert severity="error">{error.message}<Button onClick={retry}>Retry</Button></Alert>;
     return <Paper variant="outlined" sx={styles.panel}>
         <Box sx={styles.toolbar}>
             <Box><Typography component="h2" variant="h5">Items</Typography><Typography color="text.secondary">Manage the collection your customers see.</Typography></Box>
             <Button onClick={() => {void items.refetch();}} disabled={items.isFetching}>Refresh inventory</Button>
             <Button variant="contained" onClick={() => {setSaved(false); setEditing(null);}}>Add item</Button>
         </Box>
+        {editing !== undefined && error && <Alert severity="warning" sx={{mb: 2}}>Unable to refresh item options. Your draft is still open. <Button onClick={retry}>Retry</Button></Alert>}
         {saved && <Alert severity="success" sx={{mb: 2}}>Item saved. Its active status controls storefront visibility.</Alert>}
         {saved && imageWarning && <Alert severity="warning" sx={{mb: 2}}>{imageWarning}</Alert>}
         <FormControlLabel label="Show inactive products" control={<Checkbox checked={includeInactive} onChange={(_, checked) => setIncludeInactive(checked)} />} />
@@ -42,4 +52,5 @@ export default function Items() {
         </Dialog>
     </Paper>;
 }
+
 

@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../../lib/supabase";
 import { getAuthQueryOption } from "./auth.query";
-import { authKeys } from "./auth.types";
+import { authKeys, type AuthState } from "./auth.types";
 
 // Mount once in main.tsx; routes consume the resulting router context.
 export function useAuth() {
@@ -10,14 +10,23 @@ export function useAuth() {
     const auth = useQuery(getAuthQueryOption());
     useEffect(() => {
         const timers = new Set<ReturnType<typeof setTimeout>>();
-        const {data: {subscription}} = supabase.auth.onAuthStateChange((event) => {
+        let previousUserId = queryClient.getQueryData<AuthState>(authKeys.all)?.userId;
+        const {data: {subscription}} = supabase.auth.onAuthStateChange((event, session) => {
             // Defer client calls until Supabase releases its auth lock.
             const timer = setTimeout(() => {
                 timers.delete(timer);
-                if (event === "SIGNED_OUT" || event === "SIGNED_IN") {
+                const userId = session?.user && !session.user.is_anonymous ? session.user.id : null;
+                const accountChanged = event === "SIGNED_OUT" || (previousUserId !== undefined && previousUserId !== userId);
+                previousUserId = userId;
+                if (accountChanged) {
                     queryClient.removeQueries({predicate: query => query.queryKey[0] !== authKeys.all[0]});
+                    // Hide protected routes until the new account's claims have been checked.
+                    void queryClient.resetQueries({queryKey: authKeys.all, exact: true});
+                } else {
+                    // SIGNED_IN also fires when the same user returns from a file picker.
+                    // Recheck claims without destroying active queries or unsaved forms.
+                    void queryClient.invalidateQueries({queryKey: authKeys.all});
                 }
-                void queryClient.invalidateQueries({queryKey: authKeys.all});
             }, 0);
             timers.add(timer);
         });
@@ -28,3 +37,4 @@ export function useAuth() {
     }, [queryClient]);
     return auth;
 }
+
