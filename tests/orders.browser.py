@@ -80,7 +80,7 @@ with sync_playwright() as p:
     page.get_by_role('button',name='New staff order',exact=True).click()
     page.get_by_role('combobox',name='Customer',exact=False).click()
     page.get_by_role('option',name='Walk In · 0700000000',exact=True).click()
-    page.get_by_role('combobox',name='Item',exact=True).click()
+    page.get_by_role('combobox',name='Item',exact=False).click()
     page.get_by_role('option',name='Floral Dress',exact=True).click()
     expect(page.get_by_role('dialog').locator('.MuiInputLabel-root')).to_have_count(0)
     expect(page.get_by_role('dialog').locator('label',has_text='Quantity')).to_be_visible()

@@ -55,6 +55,16 @@ features. Returns remains UI-only.
 - Orders own item/customer lookups, creation, status changes, details, timeline,
   and errors. Staff request IDs remain stable when retrying the same payload.
   Status rules live in `order.model.ts`; database enforcement is unchanged.
+  `StaffOrderForm` uses React Hook Form and the Zod staff-order schema;
+  `StaffOrderLines` uses `useFieldArray` with stable row IDs and field errors.
+  `StaffOrderConfirmation` owns the Yes/No presentation. Unchanged confirmed
+  retries reuse their request ID; changed payloads receive a new ID. Price
+  refresh updates registered price fields without replacing line rows.
+  `OrderView` coordinates detail/timeline queries and action selection;
+  `OrderSummary` and `OrderTimeline` only render data. `OrderStatusForm` owns
+  React Hook Form validation (including decline reasons), mutation/submission
+  state, errors, and Yes/No approval. Customer presentation hides staff audit
+  fields even if extra fields are present in supplied timeline data.
 - Returns are UI-only: a placeholder screen and disabled Add button. There are
   no return APIs, queries, mutations, validation schemas, or edit/detail workflows.
 - Stock Management has no generic entity API, record normalization, or form.
@@ -76,6 +86,9 @@ failed-save draft retention.
 after a failed save, retry payloads, header edits, read-only details, responsive
 search, purchase Yes/No approvals, and the UI-only returns boundary (no API requests or active actions).
 It uses mocked APIs only.
+`tests/orderForms.browser.py` verifies staff line validation and removal,
+confirmation cancellation, failed-save retention, retry request IDs, price
+refresh, decline reason validation, and fresh defaults for a new status action.
 The existing `orders.browser.py` and `cart.browser.py` cover the retained order
 and checkout workflows. Build/preview with the test settings documented there.
 

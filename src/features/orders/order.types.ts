@@ -1,4 +1,6 @@
 import type { Database } from "../../database.types";
+import type { z } from "zod";
+import type { orderStatusSchema, staffOrderSchema } from "./order.schema";
 export type OrderStatus = Database["public"]["Enums"]["order_status"];
 export type OrderOrigin = "online" | "staff";
 export type OrderItem = {
@@ -7,6 +9,11 @@ export type OrderItem = {
   sale_price: number;
 };
 export type OrderRow = Database["public"]["Tables"]["order"]["Row"];
+export type StaffOrderFormData = z.infer<typeof staffOrderSchema>;
+export type OrderStatusFormData = z.infer<typeof orderStatusSchema>;
+export type OrderDetail = Database["public"]["Tables"]["order_details"]["Row"] & {item: {item_name: string} | null};
+export type OrderTimelineEntry = Database["public"]["Tables"]["order_status_history"]["Row"]
+  | Database["public"]["Functions"]["get_order_timeline"]["Returns"][number];
 
 export const orderKeys = {
     all: ["orders"] as const,
