@@ -1,5 +1,1 @@
-Admin lists use `AdminResponsiveList`: below the theme's `md` breakpoint (900px by default) it mounts a paginated card list; otherwise it mounts the DataGrid. It never mounts both presentations together. Pages retain their existing queries, loading/errors and edit dialogs; presentation components receive rows and callbacks and do not fetch.
-
-Search, sorting and pagination belong to the shared list and survive viewport changes. Search includes formatted relationship names. Desktop column filters are replaced by the shared search control so filtering is consistent across layouts. Pagination limits mounted cards; it is client-side over the existing query results, not server-side data pagination.
-
-`AdminRecordManager` supplies cards for categories, suppliers, supplier categories and units. `AdminItemList` supplies minimal item cards with name, sale price, category, unit and Edit; no product images are rendered. Reuse these components for future admin lists. Keep new actions in the parent and pass callbacks to both views.
+Admin owns navigation only. Each child feature owns its screen, forms, lists, styles, API and query configuration. Do not import feature UI from this folder.

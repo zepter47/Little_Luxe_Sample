@@ -1,4 +1,4 @@
-export function prepareAdminRows<T>(rows: T[], search: string, getSearchText: (row: T) => string,
+export function prepareItemRows<T>(rows: T[], search: string, getSearchText: (row: T) => string,
     sortField: string | undefined, direction: 'asc' | 'desc' | null | undefined,
     getSortValue: (row: T, field: string) => string | number) {
     const term = search.trim().toLocaleLowerCase();
@@ -15,6 +15,6 @@ export function prepareAdminRows<T>(rows: T[], search: string, getSearchText: (r
     return visible;
 }
 
-export function clampAdminPage(page: number, pageSize: number, count: number) {
+export function clampItemPage(page: number, pageSize: number, count: number) {
     return Math.min(page, Math.max(0, Math.ceil(count / pageSize) - 1));
 }

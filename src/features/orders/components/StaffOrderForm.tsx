@@ -1,4 +1,4 @@
-import LabeledTextField from "../../components/forms/LabeledTextField";
+import LabeledTextField from "./LabeledTextField";
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -12,20 +12,12 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { getCustomers } from "../customers/customer.api";
-import { getStockOptions } from "../stock/stock.api";
-import { createStaffOrder, type OrderItem } from "./order.api";
+import type { OrderItem } from "../order.types";
 import OrderIssues from "./OrderIssues";
-import { refreshOrders } from "./order.query";
+import { createStaffOrderMutationOption, getOrderCustomersQueryOption, getOrderItemsQueryOption } from "../order.query";
 export default function StaffOrderForm({ onClose }: { onClose: () => void }) {
-  const customers = useQuery({
-    queryKey: ["customers"],
-    queryFn: getCustomers,
-  });
-  const options = useQuery({
-    queryKey: ["stock-options"],
-    queryFn: getStockOptions,
-  });
+  const customers = useQuery(getOrderCustomersQueryOption());
+  const options = useQuery(getOrderItemsQueryOption());
   const [customer, setCustomer] = useState("");
   const [notes, setNotes] = useState("");
   const [lines, setLines] = useState<OrderItem[]>([
@@ -35,20 +27,17 @@ export default function StaffOrderForm({ onClose }: { onClose: () => void }) {
   const [localError, setLocalError] = useState("");
   const request = useRef({ payload: "", id: "" });
   const client = useQueryClient();
-  const mutation = useMutation({
-    mutationFn: async () => {
-      const payload = JSON.stringify({ customer, lines, notes });
-      if (request.current.payload !== payload)
-        request.current = { payload, id: crypto.randomUUID() };
-      return createStaffOrder(customer, lines, request.current.id, notes);
-    },
-    onSuccess: async () => {
-      await refreshOrders(client);
+  const mutation = useMutation(createStaffOrderMutationOption(client));
+  async function submit() {
+    const payload = JSON.stringify({customer, lines, notes});
+    if (request.current.payload !== payload) request.current = {payload, id: crypto.randomUUID()};
+    try {
+      await mutation.mutateAsync({customerId: customer, items: lines, requestId: request.current.id, notes});
       onClose();
-    },
-  });
+    } catch { /* Keep the form open and preserve the idempotency key on retry. */ }
+  }
   const names = Object.fromEntries(
-    (options.data?.items || []).map((i) => [i.item_id, i.item_name]),
+    (options.data || []).map((i) => [i.item_id, i.item_name]),
   );
   const patch = (index: number, values: Partial<OrderItem>) =>
     setLines((old) =>
@@ -117,7 +106,7 @@ export default function StaffOrderForm({ onClose }: { onClose: () => void }) {
                 fullWidth
                 disabled={mutation.isPending}
                 onChange={(e) => {
-                  const item = options.data?.items.find(
+                  const item = options.data?.find(
                     (i) => i.item_id === e.target.value,
                   );
                   patch(n, {
@@ -126,7 +115,7 @@ export default function StaffOrderForm({ onClose }: { onClose: () => void }) {
                   });
                 }}
               >
-                {options.data?.items.map((i) => (
+                {options.data?.map((i) => (
                   <MenuItem key={i.item_id} value={i.item_id}>
                     {i.item_name}
                   </MenuItem>
@@ -180,12 +169,13 @@ export default function StaffOrderForm({ onClose }: { onClose: () => void }) {
             <Button
               onClick={() =>
                 void options.refetch().then((result) => {
-                  if (result.data)
+                  const items = result.data;
+                  if (items)
                     setLines((old) =>
                       old.map((l) => ({
                         ...l,
                         sale_price:
-                          result.data.items.find((i) => i.item_id === l.item_id)
+                          items.find((i) => i.item_id === l.item_id)
                             ?.sale_price ?? l.sale_price,
                       })),
                     );
@@ -251,7 +241,7 @@ export default function StaffOrderForm({ onClose }: { onClose: () => void }) {
             disabled={mutation.isPending}
             onClick={() => {
               setConfirm(false);
-              mutation.mutate();
+              void submit();
             }}
           >
             Yes

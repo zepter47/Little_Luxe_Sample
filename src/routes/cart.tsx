@@ -18,7 +18,7 @@ import { db } from "../services/db/database";
 import { requireUser } from "../features/auth/auth";
 import { createOnlineOrder } from "../features/orders/order.api";
 import { refreshOrders } from "../features/orders/order.query";
-import OrderIssues from "../features/orders/OrderIssues";
+import OrderIssues from "../features/orders/components/OrderIssues";
 import { useCart } from "../features/cart/cart.hooks";
 import { changeQuantity, removeCartItem } from "../features/cart/cart.api";
 import { formatPrice, getCartImage } from "../features/cart/image";

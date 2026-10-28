@@ -1,33 +1,7 @@
 import { supabase } from "../../lib/supabase";
 import { orderItemsSchema } from "./order.schema";
-import type { Database } from "../../database.types";
-export type OrderStatus = Database["public"]["Enums"]["order_status"];
-export type OrderOrigin = "online" | "staff";
-export type OrderItem = {
-  item_id: string;
-  quantity: number;
-  sale_price: number;
-};
-export type OrderRow = Database["public"]["Tables"]["order"]["Row"];
-export class OrderValidationError extends Error {
-  issues: {
-    item_id: string;
-    code: string;
-    requested?: number;
-    available?: number;
-    previous_price?: number;
-    current_price?: number;
-  }[] = [];
-  constructor(error: { message: string; details?: string }) {
-    super(error.message);
-    try {
-      const issues: unknown = JSON.parse(error.details || "[]");
-      if (Array.isArray(issues)) this.issues = issues;
-    } catch {
-      /* Unexpected server errors keep their message. */
-    }
-  }
-}
+import type { OrderItem, OrderStatus } from "./order.types";
+import { OrderValidationError } from "./order.errors";
 export async function createOnlineOrder(items: OrderItem[], requestId: string) {
   const { data, error } = await supabase.rpc("create_online_order", {
     p_items_json: orderItemsSchema.parse(items),
@@ -103,18 +77,14 @@ export async function updateOrderStatus(
     order_status: OrderStatus;
   };
 }
-export function allowedActions(
-  origin: string,
-  status: OrderStatus | null,
-): OrderStatus[] {
-  if (origin !== "online" && origin !== "staff") return [];
-  if (origin === "staff")
-    return status === "received" ? ["delivered", "declined"] : [];
-  return status === "received"
-    ? ["processed", "declined"]
-    : status === "processed"
-      ? ["shipped", "declined"]
-      : status === "shipped"
-        ? ["delivered", "declined"]
-        : [];
+
+export async function getOrderItemsAsync() {
+    const {data, error} = await supabase.from("item").select("item_id,item_name,sale_price").order("item_name");
+    if (error) throw error;
+    return data;
+}
+export async function getOrderCustomersAsync() {
+    const {data, error} = await supabase.from("customer").select("*").order("first_name");
+    if (error) throw error;
+    return data;
 }

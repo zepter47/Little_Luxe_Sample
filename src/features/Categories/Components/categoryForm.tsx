@@ -2,7 +2,7 @@ import { useForm, Controller } from "react-hook-form";
 import type { categoryFormData } from "../category.types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { categorySchema } from "../category.schema";
-import { styles } from "../../products/components/ProductForm.styles";
+import { styles } from "./CategoryForm.styles";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Stack from "@mui/material/Stack";

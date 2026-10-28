@@ -1,5 +1,5 @@
 import { Alert, Typography } from "@mui/material";
-import { OrderValidationError } from "./order.api";
+import { OrderValidationError } from "../order.errors";
 export default function OrderIssues({
   error,
   names = {},

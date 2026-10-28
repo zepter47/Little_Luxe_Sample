@@ -2,11 +2,11 @@ import { useState, type ReactNode } from "react";
 import { Box, Button, MenuItem, Stack, TablePagination, Typography, useMediaQuery } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { DataGrid, type GridColDef, type GridValidRowModel, type GridSortModel } from "@mui/x-data-grid";
-import LabeledTextField from "../../../components/forms/LabeledTextField";
-import { clampAdminPage, prepareAdminRows } from "./adminList.utils";
+import LabeledTextField from "./LabeledTextField";
+import { clampCategoryPage, prepareCategoryRows } from "./CategoryList.utils";
 
 /** Own shared list state here; presentation children never fetch data. */
-export default function AdminResponsiveList<T extends GridValidRowModel>({rows, columns, getRowId, renderCard,
+export default function CategoryResponsiveList<T extends GridValidRowModel>({rows, columns, getRowId, renderCard,
     getSearchText, getSortValue, label}: {
     rows: T[]; columns: GridColDef<T>[]; getRowId: (row: T) => string;
     renderCard: (row: T) => ReactNode; label: string;
@@ -17,8 +17,8 @@ export default function AdminResponsiveList<T extends GridValidRowModel>({rows, 
     const [search, setSearch] = useState("");
     const [pagination, setPagination] = useState({page: 0, pageSize: 10});
     const [sort, setSort] = useState<GridSortModel>([]);
-    const sorted = prepareAdminRows(rows, search, getSearchText, sort[0]?.field, sort[0]?.sort, getSortValue);
-    const page = clampAdminPage(pagination.page, pagination.pageSize, sorted.length);
+    const sorted = prepareCategoryRows(rows, search, getSearchText, sort[0]?.field, sort[0]?.sort, getSortValue);
+    const page = clampCategoryPage(pagination.page, pagination.pageSize, sorted.length);
     const sortable = columns.filter(column => column.sortable !== false);
     const paginationModel = {...pagination, page};
     return <Box>

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Alert, Button, CircularProgress } from "@mui/material";
-import AdminRecordManager from "../admin/components/adminRecordManager";
+import CustomerRecords from "./components/CustomerRecords";
 import { getCustomers, saveCustomer } from "./customer.api";
 export default function Customers() {
   const query = useQuery({ queryKey: ["customers"], queryFn: getCustomers });
@@ -14,7 +14,7 @@ export default function Customers() {
       </Alert>
     );
   return (
-    <AdminRecordManager
+    <CustomerRecords
       title="Customers"
       singular="customer"
       queryKey={["customers"]}

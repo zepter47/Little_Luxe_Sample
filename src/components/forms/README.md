@@ -1,14 +1,9 @@
-Use `LabeledTextField` for new text inputs, textareas (`multiline`), and combo boxes (`select` with `MenuItem` children). It places the label above the outlined input and shares the category/product form styles.
+These field components support public/authentication screens and legacy product styling.
 
-Pass normal MUI TextField props, including `label`, `required`, `error`, `helperText`, and `slotProps`. With React Hook Form, pass the controller's `ref` as `inputRef` so validation focuses the input. IDs are generated when omitted. Select labels are associated with the combobox through `labelId`.
+Admin child features, purchases, orders, and returns own their field markup and
+styles inside their feature folders. Change a feature's local LabeledTextField
+or Field.styles when its appearance needs to change. Do not import this shared
+field component into those features or create cross-feature form components.
 
-For autocomplete, preserve all MUI renderInput parameters:
-
-```tsx
-<Autocomplete
-    options={options}
-    renderInput={params => <LabeledTextField {...params} label="Category" />}
-/>
-```
-
-`Field.styles.ts` controls shared label spacing, typography, input height, and corners. Both `ProductForm.styles.ts` and `Admin.styles.ts` expose these styles. Use the optional `fieldStyles` prop for component-specific group, label, or input styling, and `sx` for individual input overrides. Preserve the separate label and accessible association when building a custom field.
+Preserve the separate label, accessible input association, validation feedback,
+and keyboard behavior when changing a feature's local field.

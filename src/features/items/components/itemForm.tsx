@@ -1,4 +1,4 @@
-import LabeledTextField from "../../../components/forms/LabeledTextField";
+import LabeledTextField from "./LabeledTextField";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";

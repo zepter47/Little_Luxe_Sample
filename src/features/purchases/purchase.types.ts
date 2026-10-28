@@ -1,5 +1,5 @@
 import type { z } from 'zod';
-import type { TablesInsert } from '../../database.types';
+import type { Tables, TablesInsert } from '../../database.types';
 import type { purchaseSchema } from './purchase.schema';
 
 export type newPurchase = TablesInsert<'purchase'>;
@@ -11,6 +11,11 @@ export type CreatePurchaseInput = {
 };
 
 export const purchaseKeys = {
-    all: ['stock', 'purchase'] as const,
-    details: (id: string) => ['stock-details', 'purchase', id] as const,
+    all: ['purchases'] as const,
+    details: (id: string) => ['purchases', 'details', id] as const,
+    options: ['purchases', 'options'] as const,
 };
+
+export type Purchase = Tables<'purchase'> & {summary: {quantity_bought: number | null}[]};
+export type PurchaseDetail = Tables<'purchase_details'>;
+export type PurchaseHeaderInput = Pick<newPurchase, 'invoice_number' | 'supplier_id' | 'purchase_notes'>;

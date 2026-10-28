@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Alert, Box, Button, Checkbox, FormControlLabel, CircularProgress, Dialog, DialogContent, DialogTitle, Paper, Typography } from "@mui/material";
-import { getAdminItemsQueryOption } from "../../items/item.query";
-import { getCategoryNameQueryOption } from "../../Categories/category.query";
-import AdminItemList from "./AdminItemList";
-import ItemForm from "../../items/components/itemForm";
-import type { AdminItem } from "../../items/item.types";
-import { getUnitsQueryOption } from "../../units/unit.query";
-import { useAuth } from "../../auth/auth";
-import { styles } from "./Admin.styles";
+import { getAdminItemsQueryOption } from "./item.query";
+import { getCategoryNameQueryOption } from "../Categories/category.query";
+import ItemList from "./components/ItemList";
+import ItemForm from "./components/itemForm";
+import type { AdminItem } from "./item.types";
+import { getUnitsQueryOption } from "../units/unit.query";
+import { useAuth } from "../auth/auth";
+import { styles } from "./components/Item.styles";
 
-export default function AdminItems() {
+export default function Items() {
     const {user} = useAuth();
     const [includeInactive, setIncludeInactive] = useState(false);
     const items = useQuery(getAdminItemsQueryOption(includeInactive, user?.id || ""));
@@ -31,7 +31,7 @@ export default function AdminItems() {
         {saved && <Alert severity="success" sx={{mb: 2}}>Item saved. Its active status controls storefront visibility.</Alert>}
         {saved && imageWarning && <Alert severity="warning" sx={{mb: 2}}>{imageWarning}</Alert>}
         <FormControlLabel label="Show inactive products" control={<Checkbox checked={includeInactive} onChange={(_, checked) => setIncludeInactive(checked)} />} />
-        <AdminItemList items={items.data || []} categories={categories.data || []} units={units.data || []} onEdit={row => {setSaved(false); setEditing(row);}} />
+        <ItemList items={items.data || []} categories={categories.data || []} units={units.data || []} onEdit={row => {setSaved(false); setEditing(row);}} />
         <Dialog open={editing !== undefined} fullWidth maxWidth="sm">
             <DialogTitle>{editing ? "Edit item" : "Add item"}</DialogTitle>
             <DialogContent>

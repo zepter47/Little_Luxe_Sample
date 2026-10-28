@@ -1,31 +1,31 @@
-import AdminResponsiveList from "./AdminResponsiveList";
-import LabeledTextField from "../../../components/forms/LabeledTextField";
+import CategoryResponsiveList from "./CategoryResponsiveList";
+import LabeledTextField from "./LabeledTextField";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Paper, Stack, Typography } from "@mui/material";
 import { type GridColDef } from "@mui/x-data-grid";
-import { styles } from "./Admin.styles";
+import { styles } from "./Category.styles";
 
-export type recordField = {name: string; label: string; required?: boolean; defaultValue?: string; format?: "amount" | "quantity"; type?: "email" | "number" | "date"; min?: number; step?: number; multiline?: boolean; options?: {value: string; label: string}[]};
-export type adminRecord = {id: string; [key: string]: string};
+export type CategoryField = {name: string; label: string; required?: boolean; defaultValue?: string; format?: "amount" | "quantity"; type?: "email" | "number" | "date"; min?: number; step?: number; multiline?: boolean; options?: {value: string; label: string}[]};
+export type CategoryRecord = {id: string; [key: string]: string};
 
-function displayValue(field: recordField, value: string) {
+function displayValue(field: CategoryField, value: string) {
     if (field.format) return Number(value || 0).toLocaleString(undefined, field.format === "amount"
         ? {minimumFractionDigits: 2, maximumFractionDigits: 2} : {maximumFractionDigits: 0});
     return field.options?.find(option => option.value === value)?.label || value;
 }
 
-export default function AdminRecordManager({title, singular, rows, fields, queryKey, onSave, notice, displayFields = fields, onSelect, onAdd, readOnly = false}: {
-    title: string; singular: string; rows: adminRecord[]; fields: recordField[];
-    queryKey: readonly string[]; onSave: (values: Record<string, string>, id?: string) => Promise<unknown>; notice?: string; displayFields?: recordField[]; onSelect?: (row: adminRecord) => void; onAdd?: () => void; readOnly?: boolean;
+export default function CategoryRecords({title, singular, rows, fields, queryKey, onSave, notice, displayFields = fields, onSelect, onAdd, readOnly = false}: {
+    title: string; singular: string; rows: CategoryRecord[]; fields: CategoryField[];
+    queryKey: readonly string[]; onSave: (values: Record<string, string>, id?: string) => Promise<unknown>; notice?: string; displayFields?: CategoryField[]; onSelect?: (row: CategoryRecord) => void; onAdd?: () => void; readOnly?: boolean;
 }) {
-    const [editing, setEditing] = useState<adminRecord | null | undefined>(undefined);
+    const [editing, setEditing] = useState<CategoryRecord | null | undefined>(undefined);
     const [values, setValues] = useState<Record<string, string>>({});
     const [saved, setSaved] = useState(false);
     const [validationError, setValidationError] = useState("");
     const queryClient = useQueryClient();
     const mutation = useMutation({mutationFn: ({values, id}: {values: Record<string, string>; id?: string}) => onSave(values, id)});
-    function openForm(row: adminRecord | null) {
+    function openForm(row: CategoryRecord | null) {
         setEditing(row);
         setValues(Object.fromEntries(fields.map(field => [field.name, row?.[field.name] ?? field.defaultValue ?? ""])));
         mutation.reset();
@@ -48,7 +48,7 @@ export default function AdminRecordManager({title, singular, rows, fields, query
             setSaved(true);
         } catch { /* Keep the form open and display the save error. */ }
     }
-    const columns: GridColDef<adminRecord>[] = displayFields.filter(field => !field.multiline).map(field => ({
+    const columns: GridColDef<CategoryRecord>[] = displayFields.filter(field => !field.multiline).map(field => ({
         field: field.name, headerName: field.label, flex: 1, minWidth: 170,
         type: field.type === "number" ? "number" : undefined,
         valueGetter: (_, row) => field.type === "number" ? Number(row[field.name] || 0) : row[field.name],
@@ -63,7 +63,7 @@ export default function AdminRecordManager({title, singular, rows, fields, query
         </Box>
         {saved && <Alert severity="success" sx={{mb: 2}}>{singular} saved successfully.</Alert>}
         {notice && <Alert severity="info" sx={{mb: 2}}>{notice}</Alert>}
-        <AdminResponsiveList rows={rows} columns={columns} getRowId={row => row.id} label={title}
+        <CategoryResponsiveList rows={rows} columns={columns} getRowId={row => row.id} label={title}
             getSearchText={row => displayFields.map(field => displayValue(field, row[field.name] || "")).join(" ")}
             getSortValue={(row, name) => displayFields.find(field => field.name === name)?.type === "number" ? Number(row[name] || 0) : displayFields.find(field => field.name === name)?.options?.find(option => option.value === row[name])?.label || row[name] || ""}
             renderCard={row => <Paper component="article" variant="outlined" sx={styles.listCard}>
@@ -104,4 +104,3 @@ export default function AdminRecordManager({title, singular, rows, fields, query
         </Dialog>
     </Paper>;
 }
-

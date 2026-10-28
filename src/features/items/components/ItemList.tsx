@@ -1,12 +1,12 @@
 import { Box, Button, Paper, Typography } from "@mui/material";
 import type { GridColDef } from "@mui/x-data-grid";
-import type { AdminItem } from "../../items/item.types";
+import type { AdminItem } from "../item.types";
 import type { category } from "../../Categories/category.types";
 import type { Unit } from "../../units/unit.query";
-import AdminResponsiveList from "./AdminResponsiveList";
-import { styles } from "./Admin.styles";
+import ItemResponsiveList from "./ItemResponsiveList";
+import { styles } from "./Item.styles";
 
-export default function AdminItemList({items, categories, units, onEdit}: {
+export default function ItemList({items, categories, units, onEdit}: {
     items: AdminItem[]; categories: category[]; units: Unit[]; onEdit: (row: AdminItem) => void;
 }) {
     const categoryName = (row: AdminItem) => categories.find(category => category.item_category_id === row.item_category_id)?.category_name || "Uncategorized";
@@ -21,7 +21,7 @@ export default function AdminItemList({items, categories, units, onEdit}: {
         {field: "actions", headerName: "Actions", sortable: false, filterable: false, width: 100,
             renderCell: ({row}) => <Button onClick={() => onEdit(row)} aria-label={`Edit ${row.item_name}`}>Edit</Button>},
     ];
-    return <AdminResponsiveList rows={items} columns={columns} getRowId={row => row.item_id} label="Items"
+    return <ItemResponsiveList rows={items} columns={columns} getRowId={row => row.item_id} label="Items"
         getSearchText={row => `${row.item_name} ${row.sale_price} ${categoryName(row)} ${unitName(row)}`}
         getSortValue={(row, field) => field === "item_category_id" ? categoryName(row) : field === "uom_id" ? unitName(row) : field === "sale_price" ? row.sale_price : field === "quantity_on_hand" ? row.quantity_on_hand : field === "is_active" ? Number(row.is_active) : row.item_name}
         renderCard={row => <Paper component="article" variant="outlined" sx={styles.listCard}>

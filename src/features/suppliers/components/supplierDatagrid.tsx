@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Alert, Button, CircularProgress, Stack } from "@mui/material";
-import AdminRecordManager from "../../admin/components/adminRecordManager";
+import SupplierRecords from "./SupplierRecords";
 import { getSuppliersQueryOption, getSupplierCategoriesQueryOption } from "../supplier.query";
 import { saveSupplierAsync, saveSupplierCategoryAsync } from "../supplier.api";
 import { supplierKeys } from "../supplier.types";
@@ -11,7 +11,7 @@ export default function SupplierDatagrid() {
     if (query.isPending || categories.isPending) return <CircularProgress aria-label="Loading suppliers" />;
     const error = query.error || categories.error;
     if (error) return <Alert severity="error">{error.message}<Button onClick={() => {void query.refetch(); void categories.refetch();}}>Retry</Button></Alert>;
-    return <Stack spacing={3}><AdminRecordManager title="Suppliers" singular="supplier" queryKey={supplierKeys.all}
+    return <Stack spacing={3}><SupplierRecords title="Suppliers" singular="supplier" queryKey={supplierKeys.all}
         notice={!categories.data?.length ? "Add a supplier category below first, then select it when creating a supplier." : undefined}
         rows={(query.data || []).map(row => ({id: row.supplier_id, supplier_name: row.supplier_name,
             supplier_cat_id: row.supplier_cat_id, supplier_email: row.supplier_email || "", supplier_contact: row.supplier_contact || "",
@@ -24,7 +24,7 @@ export default function SupplierDatagrid() {
         onSave={(values, id) => saveSupplierAsync({supplier_id: id || crypto.randomUUID(), supplier_name: values.supplier_name,
             supplier_cat_id: values.supplier_cat_id, supplier_email: values.supplier_email || null, supplier_contact: values.supplier_contact || null,
             supplier_address: values.supplier_address || null, supplier_notes: values.supplier_notes || null}, !!id)} />
-        <AdminRecordManager title="Supplier categories" singular="supplier category" queryKey={supplierKeys.categories}
+        <SupplierRecords title="Supplier categories" singular="supplier category" queryKey={supplierKeys.categories}
             rows={(categories.data || []).map(row => ({id: row.supplier_category_id, category_name: row.category_name, category_notes: row.category_notes || ""}))}
             fields={[{name: "category_name", label: "Category name", required: true}, {name: "category_notes", label: "Description", multiline: true}]}
             onSave={(values, id) => saveSupplierCategoryAsync({category_name: values.category_name, category_notes: values.category_notes}, id)} />
