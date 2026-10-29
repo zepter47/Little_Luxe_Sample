@@ -1,1 +1,0 @@
-import{n as e}from"./itemImages-dvKBwUd9.js";var t=e,n=e=>e.toLocaleString(void 0,{minimumFractionDigits:2,maximumFractionDigits:2});export{t as n,n as t};
