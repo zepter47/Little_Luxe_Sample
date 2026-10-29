@@ -46,19 +46,20 @@ with sync_playwright() as p:
     send.click()
     code = page.get_by_label('Sign-in code')
     expect(code).to_be_visible()
+    expect(code).to_have_attribute('maxlength', '10')
     assert calls[-1][1]['email'] == 'person@example.com'
     verify = page.get_by_role('button', name='Verify code and sign in')
     verify.click()
     expect(page.get_by_text('Enter the code from your email.', exact=True)).to_be_visible()
-    for invalid in ['12345', '12a456']:
+    for invalid in ['1234', '12a456']:
         code.fill(invalid)
         verify.click()
-        expect(page.get_by_text('Enter a six-digit code using numbers only.', exact=True)).to_be_visible()
+        expect(page.get_by_text('Enter a code of 5 to 10 digits using numbers only.', exact=True)).to_be_visible()
     assert len(calls) == 1
-    code.fill('012345')
+    code.fill('01234567')
     verify.click()
     expect(page.get_by_text('This code is invalid or has expired. Try again or request a new code.', exact=True)).to_be_visible()
-    assert calls[-1][1]['token'] == '012345'
+    assert calls[-1][1]['token'] == '01234567'
     page.get_by_role('button', name='Change email or request a new code').click()
     expect(email).to_have_value('person@example.com')
     email.fill('other@example.com')
@@ -66,7 +67,7 @@ with sync_playwright() as p:
     expect(page.get_by_text('The code was sent to other@example.com.', exact=True)).to_be_visible()
     expect(code).to_have_value('')
     expired = False
-    code.fill('654321')
+    code.fill('6543210987')
     verify.click()
     
     try:

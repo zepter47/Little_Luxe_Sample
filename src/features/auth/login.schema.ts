@@ -6,7 +6,7 @@ export const loginSchema = z.object({
 
 export const loginCodeSchema = z.object({
     code: z.string().min(1, "Enter the code from your email.")
-        .regex(/^[0-9]{6}$/, "Enter a six-digit code using numbers only."),
+        .regex(/^[0-9]{5,10}$/, "Enter a code of 5 to 10 digits using numbers only."),
 });
 
 export const verifyLoginSchema = loginSchema.extend(loginCodeSchema.shape);

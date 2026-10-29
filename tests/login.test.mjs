@@ -26,11 +26,13 @@ test('email validation rejects malformed input and trims valid addresses', () =>
     assert.equal(schemas.loginSchema.safeParse({email: ''}).error.issues[0].message, 'Enter your email address.');
 });
 
-test('OTP requires exactly six ASCII digits and preserves leading zeroes', () => {
-    for (const code of ['', '12345', '1234567', '12a456', '123 56', ' 123456', '１２３４５６']) {
+test('OTP accepts 5 to 10 ASCII digits and preserves leading zeroes', () => {
+    for (const code of ['', '1234', '12345678901', '12a456', '123 56', ' 123456', '１２３４５６']) {
         assert.equal(schemas.loginCodeSchema.safeParse({code}).success, false, code);
     }
-    assert.equal(schemas.loginCodeSchema.parse({code: '012345'}).code, '012345');
+    for (const code of ['01234', '012345', '0123456', '01234567', '012345678', '0123456789']) {
+        assert.equal(schemas.loginCodeSchema.parse({code}).code, code);
+    }
 });
 
 function api(auth) {
@@ -54,14 +56,14 @@ test('verification validates input, uses email OTP, and requires a session', asy
     const calls = [];
     let result = {data: {session: {access_token: 'session'}}, error: null};
     const auth = api({verifyOtp: async args => {calls.push(args); return result;}});
-    await assert.rejects(auth.verifySignInAsync({email: 'person@example.com', code: '12345'}));
+    await assert.rejects(auth.verifySignInAsync({email: 'person@example.com', code: '1234'}));
     assert.equal(calls.length, 0);
-    await auth.verifySignInAsync({email: 'person@example.com', code: '012345'});
+    await auth.verifySignInAsync({email: 'person@example.com', code: '01234567'});
     assert.equal(calls[0].type, 'email');
-    assert.equal(calls[0].token, '012345');
+    assert.equal(calls[0].token, '01234567');
     assert.equal(calls[0].email, 'person@example.com');
     result = {data: {session: null}, error: new Error('Code expired')};
-    await assert.rejects(auth.verifySignInAsync({email: 'person@example.com', code: '012345'}), /Code expired/);
+    await assert.rejects(auth.verifySignInAsync({email: 'person@example.com', code: '01234567'}), /Code expired/);
     result = {data: {session: null}, error: null};
-    await assert.rejects(auth.verifySignInAsync({email: 'person@example.com', code: '012345'}), /request a new code/);
+    await assert.rejects(auth.verifySignInAsync({email: 'person@example.com', code: '01234567'}), /request a new code/);
 });

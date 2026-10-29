@@ -62,13 +62,13 @@ function Login() {
         <Typography color="text.secondary" sx={{mb: 3}}>Sign in or create an account with your email. No password needed.</Typography>
         {sentEmail ? <Box component="form" noValidate onSubmit={codeForm.handleSubmit(verifyCode)}>
             <Stack spacing={2}>
-                <Alert severity="success">Check your email for a six-digit sign-in code.</Alert>
+                <Alert severity="success">Check your email for your sign-in code.</Alert>
                 <Typography color="text.secondary">The code was sent to {sentEmail}.</Typography>
                 <Controller name="code" control={codeForm.control} render={({field: {ref, ...field}, fieldState}) => (
                     <LabeledTextField {...field} inputRef={ref} label="Sign-in code" type="text"
                         autoComplete="one-time-code" autoFocus required fullWidth
-                        slotProps={{htmlInput: {inputMode: "numeric", maxLength: 6}}}
-                        error={!!fieldState.error} helperText={fieldState.error?.message ?? "Enter the six digits from your email."}
+                        slotProps={{htmlInput: {inputMode: "numeric", maxLength: 10}}}
+                        error={!!fieldState.error} helperText={fieldState.error?.message ?? "Enter the 5 to 10 digit code from your email."}
                         disabled={codeForm.formState.isSubmitting || verify.isSuccess} />
                 )} />
                 {verify.error && <Alert severity="error">{"code" in verify.error && verify.error.code === "otp_expired"
