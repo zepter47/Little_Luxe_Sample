@@ -3,8 +3,8 @@ import { Alert, Button, MenuItem, Stack } from "@mui/material";
 import LabeledTextField from "./LabeledTextField";
 import type { StaffOrderFormData } from "../order.types";
 
-export default function StaffOrderLines({items, disabled}: {
-  items: {item_id: string; item_name: string; sale_price: number}[]; disabled: boolean;
+export default function StaffOrderLines({items, disabled, onStructureChange}: {
+  items: {item_id: string; item_name: string; sale_price: number}[]; disabled: boolean; onStructureChange: () => void;
 }) {
   const {control, setValue, formState: {errors}} = useFormContext<StaffOrderFormData>();
   const {fields, append, remove} = useFieldArray({control, name: "items"});
@@ -26,9 +26,10 @@ export default function StaffOrderLines({items, disabled}: {
       <Controller name={`items.${index}.sale_price`} control={control} render={({field: {ref, ...field}, fieldState}) =>
         <LabeledTextField {...field} inputRef={ref} label="Sale price" fullWidth slotProps={{input: {readOnly: true}}}
           error={!!fieldState.error} helperText={fieldState.error?.message} />} />
-      <Button disabled={disabled || fields.length === 1} onClick={() => remove(index)}>Remove</Button>
+      <Button disabled={disabled || fields.length === 1} onClick={() => {remove(index); onStructureChange();}}>Remove</Button>
     </Stack>)}
     {arrayError && <Alert severity="error">{arrayError}</Alert>}
-    <Button disabled={disabled || fields.length >= 100} onClick={() => append({item_id: "", quantity: 1, sale_price: 0})}>Add item</Button>
+    <Button disabled={disabled || fields.length >= 100} onClick={() => {append({lineId: crypto.randomUUID(), item_id: "", quantity: 1, sale_price: 0}); onStructureChange();}}>Add item</Button>
   </Stack>;
 }
+

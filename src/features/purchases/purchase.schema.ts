@@ -5,6 +5,7 @@ export const purchaseSchema = z.object({
     supplier_id: z.union([z.literal(''), z.uuid('Please select a valid supplier.')]),
     purchase_notes: z.string().trim(),
     lines: z.array(z.object({
+        lineId: z.string().optional(),
         item_id: z.uuid('Select an item.'),
         quantity: z.string().regex(/^\d+$/, 'Quantity must be a positive whole number.')
             .refine(value => Number(value) >= 1 && Number(value) <= 2147483647, 'Quantity must be between 1 and 2147483647.'),
@@ -14,3 +15,4 @@ export const purchaseSchema = z.object({
         expiry_date: z.union([z.literal(''), z.iso.date('Enter a valid expiry date.')]),
     })).min(1, 'Add at least one item before saving.'),
 });
+

@@ -46,7 +46,8 @@ keep the form open and require fresh approval before a retry.
 This covers categories, units, customers, suppliers, supplier categories, items
 (including images saved with an item), purchase creation, purchase header edits,
 staff orders, and order status changes. Opening a form or editing unsaved inputs
-does not write data. Confirmation components are owned by their respective
+does not submit server data. Item, purchase, and staff-order creation forms now
+autosave unfinished local drafts; see [FORM_DRAFTS.md](FORM_DRAFTS.md). Confirmation components are owned by their respective
 features. Returns remains UI-only.
 
 ## Item navigation and person labels
@@ -115,3 +116,4 @@ reload/not-found behavior, stock deep links/back navigation, inherited auth
 checks, and first/last-name or email rendering without person UUIDs.
 
 `npm run test:orders` runs the existing local PGlite database workflow suite.
+

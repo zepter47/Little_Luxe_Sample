@@ -1,6 +1,6 @@
 import SaveConfirmation from "./SaveConfirmation";
 import LabeledTextField from "./LabeledTextField";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Alert, Box, Button, Checkbox, FormControlLabel, MenuItem, Stack, Typography } from "@mui/material";
@@ -12,6 +12,22 @@ import type { category } from "../../Categories/category.types";
 import type { Unit } from "../../units/unit.types";
 import { getItemImageUrl, uploadItemProfileImage, uploadItemGalleryImages, validateItemImage } from "../../../services/itemImages";
 
+import { useAuth } from '../../auth/auth';
+import { useFormDraft } from '../../../services/drafts/useFormDraft';
+import { itemDraftRepository } from '../item.draft';
+import type { ItemDraftExtra } from '../item.draft.schema';
+import ItemDraftStatus from './ItemDraftStatus';
+
+type ItemFormProps = {
+    item?: AdminItem; categories: category[]; units: Unit[];
+    onSaved: (warning?: string) => void; onCancel: () => void;
+};
+export default function ItemForm(props: ItemFormProps) {
+    const {user, loading} = useAuth();
+    if (loading || !user) return null;
+    return <ItemEditor key={`${user.id}:${props.item?.item_id || 'new'}`} {...props} userId={user.id} />;
+}
+
 function SelectedImage({file}: {file: File}) {
     const imageRef = useRef<HTMLImageElement>(null);
     useEffect(() => {
@@ -22,7 +38,7 @@ function SelectedImage({file}: {file: File}) {
     return <Box component="img" ref={imageRef} alt={file.name} sx={{width: 100, height: 100, objectFit: "contain"}} />;
 }
 
-export default function ItemForm({item, categories, units, onSaved, onCancel}: {
+function ItemEditor({item, categories, units, onSaved, onCancel, userId}: {userId: string} & {
     item?: AdminItem; categories: category[]; units: Unit[]; onSaved: (warning?: string) => void; onCancel: () => void;
 }) {
     const queryClient = useQueryClient();
@@ -39,14 +55,40 @@ export default function ItemForm({item, categories, units, onSaved, onCancel}: {
     const [imageError, setImageError] = useState("");
     const [warning, setWarning] = useState("");
     const existingImages = useQuery({...getItemImagesQueryOption(savedId || ""), enabled: !!savedId});
-    const {control, handleSubmit, formState: {isSubmitting}} = useForm<itemFormData>({
+    const form = useForm<itemFormData>({
         resolver: zodResolver(itemSchema),
         defaultValues: {is_active: item?.is_active ?? true, item_name: item?.item_name || "",
             sale_price: item?.sale_price || 0, item_category_id: item?.item_category_id || "",
             product_notes: item?.product_notes || "", uom_id: item?.uom_id || ""},
     });
 
-    const pending = isSubmitting || saving;
+    const {control, handleSubmit, formState: {isSubmitting}} = form;
+    const extra = useMemo(() => ({savedId, profile, profilePath, gallery, warning}),
+        [savedId, profile, profilePath, gallery, warning]);
+    function restoreExtra(value: ItemDraftExtra) {
+        setSavedId(value.savedId);
+        setProfile(value.profile);
+        setProfilePath(value.profilePath);
+        setGallery(value.gallery);
+        setWarning(value.warning);
+    }
+    const draft = useFormDraft({userId, form, repository: itemDraftRepository,
+        extra, restoreExtra, enabled: !item});
+    const [closing, setClosing] = useState(false);
+    const pending = isSubmitting || saving || closing;
+    const disabled = pending || !draft.ready || draft.finished;
+    async function closeKeepingDraft() {
+        if (closing) return;
+        setClosing(true);
+        try {if (draft.finished || await draft.saveNow()) onCancel();}
+        finally {setClosing(false);}
+    }
+    async function discardDraft() {
+        if (!window.confirm('Discard this item draft and its selected images?')) return;
+        setClosing(true);
+        try {if (await draft.discard()) onCancel();}
+        finally {setClosing(false);}
+    }
 
     function chooseImages(files: File[], isProfile: boolean) {
         try {
@@ -60,29 +102,40 @@ export default function ItemForm({item, categories, units, onSaved, onCancel}: {
     async function onValidSubmit(data: itemFormData) {
         let currentId = savedId;
         let cleanupWarning = warning || undefined;
+        let recovery: ItemDraftExtra = {...extra};
         setImageError("");
         try {
+            if (!await draft.saveNow()) return;
             const itemId = await mutation.mutateAsync({p_item_id: savedId, p_item_name: data.item_name,
                 p_sale_price: data.sale_price, p_category_id: data.item_category_id || null,
                 p_uom_id: data.uom_id, p_product_notes: data.product_notes, p_is_active: data.is_active,
                 p_image_path: profilePath});
             setSavedId(itemId);
             currentId = itemId;
+            recovery = {...recovery, savedId: itemId};
+            // Once the item exists, reopening must update it, not create it again.
+            if (!await draft.saveNow({values: form.getValues(), extra: recovery})) return;
             if (profile) {
                 const result = await profileMutation.mutateAsync({itemId: itemId, file: profile});
                 setProfilePath(result.path);
                 setProfile(undefined);
                 if (result.warning) {cleanupWarning = result.warning; setWarning(result.warning);}
+                recovery = {...recovery, profilePath: result.path, profile: undefined,
+                    warning: cleanupWarning || ''};
+                if (!await draft.saveNow({values: form.getValues(), extra: recovery})) return;
             }
             if (gallery.length) {
                 const result = await galleryMutation.mutateAsync({itemId: itemId, files: gallery});
-                setGallery(result.failed.map(failure => failure.file));
+                const remaining = result.failed.map(failure => failure.file);
+                setGallery(remaining);
+                recovery = {...recovery, gallery: remaining};
+                if (!await draft.saveNow({values: form.getValues(), extra: recovery})) return;
                 if (result.failed.length) {
                     setImageError(`Item saved. Retry failed images: ${result.failed.map(failure => `${failure.file.name}: ${failure.message}`).join("; ")}`);
                     return;
                 }
             }
-            onSaved(cleanupWarning);
+            if (await draft.complete()) onSaved(cleanupWarning);
         } catch (error) {
             setImageError(`${currentId ? "The item exists; retry saving to finish. " : ""}${error instanceof Error ? error.message : String((error as {message?: string}).message || error)}`);
         } finally {
@@ -91,7 +144,7 @@ export default function ItemForm({item, categories, units, onSaved, onCancel}: {
     }
 
     async function saveApprovedDraft() {
-        if (!approvedDraft || savingRef.current) return;
+        if (!approvedDraft || savingRef.current || disabled) return;
         savingRef.current = true;
         setSaving(true);
         const data = approvedDraft;
@@ -100,11 +153,14 @@ export default function ItemForm({item, categories, units, onSaved, onCancel}: {
         finally {savingRef.current = false; setSaving(false);}
     }
 
-    return <Box component="form" noValidate onSubmit={handleSubmit(values => setApprovedDraft(values))}>
+    return <Box component="form" noValidate onBlur={() => {if (draft.ready && !draft.finished) void draft.saveNow();}} onSubmit={handleSubmit(values => setApprovedDraft(values))}>
         <Stack spacing={2.5}>
+            {!item && <ItemDraftStatus {...draft} disabled={pending}
+                onRetry={() => {void (draft.finished ? draft.complete().then(done => {if (done) onSaved(warning || undefined);}) : draft.saveNow());}}
+                onDiscard={() => {void discardDraft();}} />}
             {imageError && <Alert severity="error">{imageError}</Alert>}
             {warning && <Alert severity="warning">{warning}</Alert>}
-            <Box component="fieldset" disabled={pending} sx={{border: 0, p: 0, m: 0, minWidth: 0}}>
+            <Box component="fieldset" disabled={disabled} sx={{border: 0, p: 0, m: 0, minWidth: 0}}>
             <Stack spacing={2.5}>
             <Controller name="item_name" control={control} render={({field: {ref, ...field}, fieldState}) =>
                 <LabeledTextField {...field} inputRef={ref} label="Item name" fullWidth error={!!fieldState.error} helperText={fieldState.error?.message} />} />
@@ -130,18 +186,18 @@ export default function ItemForm({item, categories, units, onSaved, onCancel}: {
             <Controller name="product_notes" control={control} render={({field: {ref, ...field}}) =>
                 <LabeledTextField {...field} inputRef={ref} label="Description" multiline minRows={3} fullWidth />} />
             <Typography variant="subtitle1">Profile picture</Typography>
-            <Button component="label" variant="outlined" disabled={pending}>
+            <Button component="label" variant="outlined" disabled={disabled}>
                 Add profile picture
-                <input hidden type="file" accept="image/png,image/jpeg,image/webp" disabled={pending}
+                <input hidden type="file" accept="image/png,image/jpeg,image/webp" disabled={disabled}
                     onChange={event => {const files = Array.from(event.target.files || []); if (files.length) chooseImages(files, true); event.target.value = "";}} />
             </Button>
             {profile ? <Stack direction="row" spacing={1} sx={{alignItems: "center"}}><SelectedImage file={profile} />
                 <Button onClick={() => setProfile(undefined)}>Remove selection</Button></Stack>
                 : profilePath && <Box component="img" src={getItemImageUrl(profilePath)} alt="Current profile picture" sx={{height: 180, objectFit: "contain"}} />}
             <Typography variant="subtitle1">Other images</Typography>
-            <Button component="label" variant="outlined" disabled={pending}>
+            <Button component="label" variant="outlined" disabled={disabled}>
                 Add other images
-                <input hidden type="file" multiple accept="image/png,image/jpeg,image/webp" disabled={pending}
+                <input hidden type="file" multiple accept="image/png,image/jpeg,image/webp" disabled={disabled}
                     onChange={event => {chooseImages(Array.from(event.target.files || []), false); event.target.value = "";}} />
             </Button>
             <Typography variant="caption" color="text.secondary">JPEG, PNG or WebP, up to 6 MB each. Selected pictures upload when you save.</Typography>
@@ -155,11 +211,12 @@ export default function ItemForm({item, categories, units, onSaved, onCancel}: {
             </Stack>)}
             </Stack></Box>
             <Stack direction="row" spacing={1} sx={{justifyContent: "flex-end"}}>
-                <Button onClick={onCancel} disabled={pending}>Cancel</Button>
-                <Button type="submit" variant="contained" disabled={pending || !units.length}>{pending ? "Saving item and images…" : "Save item"}</Button>
+                <Button onClick={() => {void closeKeepingDraft();}} disabled={pending || (!draft.ready && !draft.finished)}>{item ? "Cancel" : "Close and keep draft"}</Button>
+                <Button type="submit" variant="contained" disabled={disabled || !units.length}>{pending ? "Saving item and images…" : "Save item"}</Button>
             </Stack>
         </Stack>
         <SaveConfirmation open={approvedDraft !== null} pending={pending} label="item"
             onNo={() => setApprovedDraft(null)} onYes={() => {void saveApprovedDraft();}} />
     </Box>;
 }
+
