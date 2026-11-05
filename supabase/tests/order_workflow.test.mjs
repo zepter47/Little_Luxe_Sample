@@ -26,6 +26,14 @@ await shared.query("insert into auth.users(id,email) values($1,$2)", [
 ]);
 await shared.exec(migration("customer_auth_accounts"));
 await shared.exec(migration("order_access_review"));
+await shared.exec(`
+  ALTER TYPE public.app_permission ADD VALUE 'products.create';
+  ALTER TABLE public.item ADD COLUMN is_stocked boolean DEFAULT false,
+    ADD COLUMN added_by uuid, ADD COLUMN updated_by uuid, ADD COLUMN updated_on timestamptz;
+`);
+await shared.exec(process.env.DISCOUNT_MIGRATION_PATH
+  ? readFileSync(process.env.DISCOUNT_MIGRATION_PATH, 'utf8') : migration('whole_ugx_discounts'));
+
 assert.equal(
   (
     await shared.query(
@@ -527,4 +535,83 @@ test("staff registration generates an independent UUID; inactive online accounts
   } finally {
     await db.exec("reset role");
   }
+});
+
+test('online discounts use catalogue pricing, round UGX, and preserve snapshots and retries', async () => {
+  const db = await setup();
+  await db.exec('update item set sale_price=999,item_discount=15');
+  await actor(db, customer);
+  const key=randomUUID();
+  const payload=JSON.stringify([{item_id:item,quantity:2,sale_price:849,original_sale_price:999,order_discount:15}]);
+  const id=(await db.query('select create_online_order($1::jsonb,$2) id',[payload,key])).rows[0].id;
+  await db.exec('reset role; update item set sale_price=1200,item_discount=50');
+  await actor(db, customer);
+  assert.equal((await db.query('select create_online_order($1::jsonb,$2) id',[payload,key])).rows[0].id,id);
+  const line=(await db.query('select original_sale_price,order_discount,sale_price from order_details where order_id=$1',[id])).rows[0];
+  assert.deepEqual(line,{original_sale_price:'999',order_discount:'15',sale_price:'849'});
+  await assert.rejects(()=>db.query('select create_online_order($1::jsonb,$2)',[payload,randomUUID()]),e=>e.detail.includes('PRICE_CHANGED'));
+  await db.exec('reset role');
+  await assert.rejects(()=>db.exec('update order_details set sale_price=0'),/immutable/);
+});
+
+test('staff discounts replace catalogue promotions; free items still reserve inventory', async () => {
+  const db=await setup();
+  await db.exec('update item set sale_price=10000,item_discount=20');
+  await actor(db,staff,'staff');
+  const request=randomUUID();
+  const payload=JSON.stringify([{item_id:item,quantity:1,sale_price:9000,original_sale_price:10000,order_discount:10}]);
+  const id=(await db.query('select create_staff_order($1,$2::jsonb,$3) id',[customer,payload,request])).rows[0].id;
+  assert.equal((await db.query('select sale_price from order_details where order_id=$1',[id])).rows[0].sale_price,'9000');
+  const changed=JSON.stringify([{item_id:item,quantity:1,sale_price:0,original_sale_price:10000,order_discount:100}]);
+  await assert.rejects(()=>db.query('select create_staff_order($1,$2::jsonb,$3)',[customer,changed,request]),/different order/);
+  const free=(await db.query('select create_staff_order($1,$2::jsonb,$3) id',[customer,changed,randomUUID()])).rows[0].id;
+  assert.equal((await db.query('select sale_price from order_details where order_id=$1',[free])).rows[0].sale_price,'0');
+  assert.deepEqual(await totals(db),{physical:10,reserved:2});
+});
+
+test('discount and snapshot validation rejects tampering without reserving stock', async () => {
+  const db=await setup();
+  await db.exec('update item set sale_price=10000,item_discount=20');
+  await actor(db,customer);
+  for (const patch of [{sale_price:7000,order_discount:30},{sale_price:8000,order_discount:30},{sale_price:11000}]) {
+    const payload=JSON.stringify([{item_id:item,quantity:1,sale_price:8000,...patch}]);
+    await assert.rejects(()=>db.query('select create_online_order($1::jsonb,$2)',[payload,randomUUID()]),e=>e.detail.includes('PRICE_CHANGED'));
+  }
+  await actor(db,staff,'staff');
+  for (const patch of [{order_discount:-1},{order_discount:101},{order_discount:1.5},{order_discount:null},{sale_price:1.5},{original_sale_price:null}]) {
+    const payload=JSON.stringify([{item_id:item,quantity:1,sale_price:10000,order_discount:0,...patch}]);
+    await assert.rejects(()=>db.query('select create_staff_order($1,$2::jsonb,$3)',[customer,payload,randomUUID()]),/whole/);
+  }
+  await assert.rejects(()=>db.query('select create_staff_order($1,$2::jsonb,$3)',[customer,JSON.stringify([{item_id:item,quantity:1,sale_price:10001,order_discount:0}]),randomUUID()]),e=>e.detail.includes('PRICE_CHANGED'));
+  assert.deepEqual(await totals(db),{physical:10,reserved:0});
+});
+
+test('catalogue constraints and command reject fractional money and invalid discounts', async () => {
+  const db=await setup();
+  for (const v of [-1,101,1.5]) await assert.rejects(()=>db.query('update item set item_discount=$1',[v]),/check constraint/);
+  await assert.rejects(()=>db.exec('update item set sale_price=999.5'),/check constraint/);
+  await actor(db,staff,'staff');
+  await assert.rejects(()=>db.query("select save_item('Dress',999.5,null,null,'')"),/Invalid sale price/);
+  await assert.rejects(()=>db.query("select save_item('Dress',999,null,null,'',p_item_discount=>15.5)"),/whole percentage/);
+});
+
+test('online 100 percent discount accepts a free order and staff defaults to zero discount', async () => {
+  const db=await setup();
+  await db.exec('update item set item_discount=100');
+  await actor(db,customer);
+  const free=await online(db,1,randomUUID(),0);
+  assert.equal((await db.query('select sale_price from order_details where order_id=$1',[free])).rows[0].sale_price,'0');
+  await actor(db,staff,'staff');
+  const full=(await db.query('select create_staff_order($1,$2::jsonb,$3) id',[customer,lines(1),randomUUID()])).rows[0].id;
+  const row=(await db.query('select original_sale_price,order_discount,sale_price from order_details where order_id=$1',[full])).rows[0];
+  assert.deepEqual(row,{original_sale_price:'20',order_discount:'0',sale_price:'20'});
+});
+
+test('new lines require an original-price snapshot; staff price refresh detects stale originals', async () => {
+  const db=await setup();
+  await assert.rejects(()=>db.query('insert into order_details(item_id,sale_price,quantity_sold) values($1,0,1)',[item]),/snapshot is required/);
+  await actor(db,staff,'staff');
+  const payload=JSON.stringify([{item_id:item,quantity:1,original_sale_price:19,order_discount:100,sale_price:0}]);
+  await assert.rejects(()=>db.query('select create_staff_order($1,$2::jsonb,$3)',[customer,payload,randomUUID()]),e=>e.detail.includes('PRICE_CHANGED'));
+  assert.deepEqual(await totals(db),{physical:10,reserved:0});
 });

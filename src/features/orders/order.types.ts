@@ -7,6 +7,8 @@ export type OrderItem = {
   item_id: string;
   quantity: number;
   sale_price: number;
+  original_sale_price?: number;
+  order_discount?: number;
 };
 export type OrderRow = Database["public"]["Tables"]["order"]["Row"];
 export type OrderPerson = Pick<Database["public"]["Tables"]["customer"]["Row"], "customer_id" | "first_name" | "last_name" | "email">;

@@ -5,7 +5,9 @@ export const orderItemsSchema = z
       item_id: z.uuid("Select an item."),
       quantity: z.number({error: "Enter a quantity."}).int("Quantity must be a whole number.")
         .min(1, "Quantity must be between 1 and 999.").max(999, "Quantity must be between 1 and 999."),
-      sale_price: z.number().finite().nonnegative(),
+      sale_price: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+      original_sale_price: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
+      order_discount: z.number().int("Discount must be a whole percentage.").min(0).max(100).optional(),
     }),
   )
   .min(1)

@@ -16,6 +16,7 @@ export default function ItemList({items, categories, units, onEdit}: {
         {field: "quantity_on_hand", headerName: "Quantity on hand", type: "number", width: 170},
         {field: "is_active", headerName: "Active", type: "boolean", width: 90},
         {field: "sale_price", headerName: "Sale price", type: "number", width: 130},
+        {field: "item_discount", headerName: "Online discount (%)", type: "number", width: 165},
         {field: "item_category_id", headerName: "Category", flex: 1, minWidth: 160, valueGetter: (_, row) => categoryName(row)},
         {field: "uom_id", headerName: "Unit of measure", width: 160, valueGetter: (_, row) => unitName(row)},
         {field: "actions", headerName: "Actions", sortable: false, filterable: false, width: 100,
@@ -23,7 +24,7 @@ export default function ItemList({items, categories, units, onEdit}: {
     ];
     return <ItemResponsiveList rows={items} columns={columns} getRowId={row => row.item_id} label="Items"
         getSearchText={row => `${row.item_name} ${row.sale_price} ${categoryName(row)} ${unitName(row)}`}
-        getSortValue={(row, field) => field === "item_category_id" ? categoryName(row) : field === "uom_id" ? unitName(row) : field === "sale_price" ? row.sale_price : field === "quantity_on_hand" ? row.quantity_on_hand : field === "is_active" ? Number(row.is_active) : row.item_name}
+        getSortValue={(row, field) => field === "item_category_id" ? categoryName(row) : field === "uom_id" ? unitName(row) : field === "item_discount" ? row.item_discount : field === "sale_price" ? row.sale_price : field === "quantity_on_hand" ? row.quantity_on_hand : field === "is_active" ? Number(row.is_active) : row.item_name}
         renderCard={row => <Paper component="article" variant="outlined" sx={styles.listCard}>
             <Box sx={styles.cardHeading}>
                 <Box sx={{minWidth: 0}}>
@@ -33,8 +34,9 @@ export default function ItemList({items, categories, units, onEdit}: {
                     </Typography>
                     <Typography variant="body2" sx={{mt: 1}}>Quantity on hand: {row.quantity_on_hand}</Typography>
                     <Typography variant="body2">{row.is_active ? "Active" : "Inactive"}</Typography>
+                    <Typography variant="body2">Online discount: {row.item_discount ?? 0}%</Typography>
                     <Typography aria-label="Sale price" sx={{mt: 1, fontWeight: 600, fontVariantNumeric: "tabular-nums"}}>
-                        {row.sale_price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        {row.sale_price.toLocaleString(undefined, {maximumFractionDigits: 0})}
                     </Typography>
                 </Box>
                 <Button sx={styles.cardEdit} onClick={() => onEdit(row)} aria-label={`Edit ${row.item_name}`}>Edit</Button>

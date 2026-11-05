@@ -1,3 +1,4 @@
+import { discountedPrice } from "../features/items/item.pricing";
 import { useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
@@ -60,6 +61,8 @@ function AuthenticatedCart() {
         item_id: i.itemId,
         quantity: i.quantity,
         sale_price: i.salePrice,
+        ...(i.originalPrice !== undefined ? {original_sale_price: i.originalPrice} : {}),
+        ...(i.discount !== undefined ? {order_discount: i.discount} : {}),
       }));
       const fingerprint = JSON.stringify({ userId, payload });
       if (attempt.current.payload !== fingerprint)
@@ -148,12 +151,11 @@ function AuthenticatedCart() {
               const latest = await getItemsAsync();
               await db.transaction("rw", db.cartItems, async () => {
                 for (const item of items) {
-                  const price = latest.find(
-                    (i) => i.item_id === item.itemId,
-                  )?.sale_price;
-                  if (price !== undefined)
+                  const product = latest.find((i) => i.item_id === item.itemId);
+                  if (product)
                     await db.cartItems.update([userId, item.itemId], {
-                      salePrice: price,
+                      salePrice: discountedPrice(product.sale_price, product.item_discount ?? 0),
+                      originalPrice: product.sale_price, discount: product.item_discount ?? 0,
                     });
                 }
               });
@@ -196,6 +198,8 @@ function AuthenticatedCart() {
               )}
               <Stack spacing={1} sx={{ flex: 1 }}>
                 <Typography variant="h6">{item.itemName}</Typography>
+                {(item.discount ?? 0) > 0 && <Typography color="success.main">{item.discount}% OFF</Typography>}
+                {(item.discount ?? 0) > 0 && item.originalPrice !== undefined && <Typography component="s" color="text.secondary">{formatPrice(item.originalPrice)}</Typography>}
                 <Typography>{formatPrice(item.salePrice)} each</Typography>
                 <Stack
                   direction="row"

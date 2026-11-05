@@ -58,7 +58,7 @@ function ItemEditor({item, categories, units, onSaved, onCancel, userId}: {userI
     const form = useForm<itemFormData>({
         resolver: zodResolver(itemSchema),
         defaultValues: {is_active: item?.is_active ?? true, item_name: item?.item_name || "",
-            sale_price: item?.sale_price || 0, item_category_id: item?.item_category_id || "",
+            sale_price: item?.sale_price || 0, item_discount: item?.item_discount ?? 0, item_category_id: item?.item_category_id || "",
             product_notes: item?.product_notes || "", uom_id: item?.uom_id || ""},
     });
 
@@ -107,7 +107,7 @@ function ItemEditor({item, categories, units, onSaved, onCancel, userId}: {userI
         try {
             if (!await draft.saveNow()) return;
             const itemId = await mutation.mutateAsync({p_item_id: savedId, p_item_name: data.item_name,
-                p_sale_price: data.sale_price, p_category_id: data.item_category_id || null,
+                p_sale_price: data.sale_price, p_item_discount: data.item_discount, p_category_id: data.item_category_id || null,
                 p_uom_id: data.uom_id, p_product_notes: data.product_notes, p_is_active: data.is_active,
                 p_image_path: profilePath});
             setSavedId(itemId);
@@ -167,8 +167,14 @@ function ItemEditor({item, categories, units, onSaved, onCancel, userId}: {userI
             <Controller name="sale_price" control={control} render={({field: {ref, ...field}, fieldState}) =>
                 <LabeledTextField {...field} inputRef={ref} onChange={event => field.onChange(event.target.value === "" ? NaN : Number(event.target.value))}
                     label="Sale price" type="number" fullWidth value={Number.isNaN(field.value) ? "" : field.value}
-                    slotProps={{htmlInput: {min: 0, step: "0.01"}}}
+                    slotProps={{htmlInput: {min: 0, step: 1}}}
                     error={!!fieldState.error} helperText={fieldState.error?.message} />} />
+            <Controller name="item_discount" control={control} render={({field: {ref, ...field}, fieldState}) =>
+                <LabeledTextField {...field} inputRef={ref} label="Online discount (%)" type="number" fullWidth
+                    value={Number.isNaN(field.value) ? "" : field.value}
+                    onChange={event => field.onChange(event.target.value === "" ? NaN : Number(event.target.value))}
+                    slotProps={{htmlInput: {min: 0, max: 100, step: 1}}}
+                    error={!!fieldState.error} helperText={fieldState.error?.message || "Whole percentage, 0–100. A 100% discount makes the item free."} />} />
             <Controller name="item_category_id" control={control} render={({field: {ref, ...field}}) =>
                 <LabeledTextField {...field} inputRef={ref} select label="Category" fullWidth>
                     <MenuItem value="">Uncategorized</MenuItem>

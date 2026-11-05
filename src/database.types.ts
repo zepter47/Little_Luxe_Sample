@@ -159,6 +159,7 @@ export type Database = {
           is_active: boolean
           is_stocked: boolean | null
           item_category_id: string | null
+          item_discount: number
           item_id: string
           item_name: string
           max_stock: number | null
@@ -176,6 +177,7 @@ export type Database = {
           is_active?: boolean
           is_stocked?: boolean | null
           item_category_id?: string | null
+          item_discount?: number
           item_id?: string
           item_name: string
           max_stock?: number | null
@@ -193,6 +195,7 @@ export type Database = {
           is_active?: boolean
           is_stocked?: boolean | null
           item_category_id?: string | null
+          item_discount?: number
           item_id?: string
           item_name?: string
           max_stock?: number | null
@@ -382,7 +385,9 @@ export type Database = {
           expiry_date: string | null
           item_id: string
           order_details_id: string
+          order_discount: number
           order_id: string
+          original_sale_price: number | null
           quantity_sold: number
           sale_price: number
         }
@@ -391,7 +396,9 @@ export type Database = {
           expiry_date?: string | null
           item_id: string
           order_details_id?: string
+          order_discount?: number
           order_id: string
+          original_sale_price?: number | null
           quantity_sold: number
           sale_price: number
         }
@@ -400,7 +407,9 @@ export type Database = {
           expiry_date?: string | null
           item_id?: string
           order_details_id?: string
+          order_discount?: number
           order_id?: string
+          original_sale_price?: number | null
           quantity_sold?: number
           sale_price?: number
         }
@@ -889,6 +898,7 @@ export type Database = {
           is_active: boolean
           is_stocked: boolean
           item_category_id: string
+          item_discount: number
           item_id: string
           item_name: string
           product_notes: string
@@ -913,6 +923,7 @@ export type Database = {
           is_active: boolean
           is_stocked: boolean
           item_category_id: string
+          item_discount: number
           item_id: string
           item_name: string
           product_notes: string
@@ -946,6 +957,7 @@ export type Database = {
           p_category_id: string
           p_image_path?: string
           p_is_active?: boolean
+          p_item_discount?: number
           p_item_id?: string
           p_item_name: string
           p_product_notes: string

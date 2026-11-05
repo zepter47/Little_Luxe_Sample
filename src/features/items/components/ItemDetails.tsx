@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Alert, Box, Button, CircularProgress, Stack, Typography } from "@mui/material";
+import ItemPrice from "./ItemPrice";
 import AddToCartButton from "../../cart/AddToCartButton";
 import { getItemImagesQueryOption, getItemQueryOption } from "../item.query";
 import { getItemImageUrl } from "../../../services/itemImages";
@@ -38,7 +39,7 @@ export default function ItemDetails({itemId}: {itemId: string}) {
             </Box>
             <Stack spacing={2}>
                 <Typography component="h1" variant="h3" sx={{fontFamily: "Georgia, serif"}}>{item.item_name}</Typography>
-                <Typography variant="h5">UGX {item.sale_price.toLocaleString(undefined, {minimumFractionDigits: 2})}</Typography>
+                <ItemPrice price={item.sale_price} discount={item.item_discount} />
                 <Typography sx={{whiteSpace: "pre-wrap"}}>{item.product_notes}</Typography>
                 <AddToCartButton product={item} />
             </Stack>

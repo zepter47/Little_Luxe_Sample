@@ -57,7 +57,8 @@ test('compact items mount only paginated image-free cards with resolved labels a
     assert.match(html, /Accessories/);
     assert.match(html, /Piece/);
     assert.match(html, /aria-label="Edit Item 0"/);
-    assert.match(html, /25\.00/);
+    assert.match(html, />25</);
+    assert.doesNotMatch(html, /25\.00/);
     assert.match(html, /Quantity on hand: 8/);
     assert.match(html, /Quantity on hand: 0/);
     assert.match(html, /Inactive/);

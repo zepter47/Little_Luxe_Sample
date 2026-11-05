@@ -1,3 +1,4 @@
+import { discountedPrice } from '../items/item.pricing';
 import { db } from '../../services/db/database';
 import { requireUser } from '../auth/auth';
 import type { CartProduct } from '../items/item.types';
@@ -10,7 +11,7 @@ export async function addToCart(product: CartProduct) {
     const key: [string, string] = [userId, product.item_id];
     if (await db.cartItems.get(key)) return false;
     await db.cartItems.add({ userId, itemId: product.item_id, itemName: product.item_name,
-      salePrice: product.sale_price, quantity: 1, imagePath: product.image_path });
+      salePrice: discountedPrice(product.sale_price, product.item_discount ?? 0), originalPrice: product.sale_price, discount: product.item_discount ?? 0, quantity: 1, imagePath: product.image_path });
     return true;
   });
 }

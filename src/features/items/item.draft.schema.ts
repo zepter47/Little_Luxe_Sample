@@ -3,7 +3,7 @@ import { draftEnvelopeSchema, unfinishedNumberSchema } from '../../services/draf
 
 export const itemDraftSchema = draftEnvelopeSchema.extend({
   values: z.object({
-    is_active: z.boolean(), item_name: z.string(), sale_price: unfinishedNumberSchema,
+    is_active: z.boolean(), item_name: z.string(), sale_price: unfinishedNumberSchema, item_discount: unfinishedNumberSchema.default(0),
     item_category_id: z.string(), product_notes: z.string(), uom_id: z.string(),
   }),
   extra: z.object({

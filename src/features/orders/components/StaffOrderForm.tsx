@@ -1,3 +1,4 @@
+import { discountedPrice } from "../../items/item.pricing";
 import { useRef, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -29,7 +30,7 @@ function StaffOrderEditor({onClose, userId}: {onClose: () => void; userId: strin
   const client = useQueryClient();
   const mutation = useMutation(createStaffOrderMutationOption(client));
   const form = useForm<StaffOrderFormData>({resolver: zodResolver(staffOrderSchema),
-    defaultValues: {customer_id: "", notes: "", items: [{lineId: crypto.randomUUID(), item_id: "", quantity: 1, sale_price: 0}]},
+    defaultValues: {customer_id: "", notes: "", items: [{lineId: crypto.randomUUID(), item_id: "", quantity: 1, sale_price: 0, original_sale_price: 0, order_discount: 0}]},
   });
   const [approvedDraft, setApprovedDraft] = useState<StaffOrderFormData | null>(null);
   // Request identity is independent of form state; identical retries reuse the same ID.
@@ -60,7 +61,7 @@ function StaffOrderEditor({onClose, userId}: {onClose: () => void; userId: strin
     setSubmitting(true);
     const values = approvedDraft;
     setApprovedDraft(null);
-    const submission = {...values, items: values.items.map(({item_id, quantity, sale_price}) => ({item_id, quantity, sale_price}))};
+    const submission = {...values, items: values.items.map(({item_id, quantity, sale_price, original_sale_price, order_discount}) => ({item_id, quantity, sale_price, original_sale_price, order_discount}))};
     const payload = JSON.stringify(submission);
     const identity = request.payload === payload ? request : {payload, id: crypto.randomUUID()};
     setRequest(identity);
@@ -77,7 +78,12 @@ function StaffOrderEditor({onClose, userId}: {onClose: () => void; userId: strin
     if (!result.data) return;
     for (const [index, line] of form.getValues("items").entries()) {
       const price = result.data.find(item => item.item_id === line.item_id)?.sale_price;
-      if (price !== undefined) form.setValue(`items.${index}.sale_price`, price, {shouldDirty: true, shouldValidate: true});
+      if (price !== undefined) {
+        form.setValue(`items.${index}.original_sale_price`, price, {shouldDirty: true});
+        const discount = line.order_discount ?? 0;
+        if (Number.isInteger(discount) && discount >= 0 && discount <= 100)
+          form.setValue(`items.${index}.sale_price`, discountedPrice(price, discount), {shouldDirty: true, shouldValidate: true});
+      }
     }
   }
   return <Dialog open fullWidth maxWidth="md" onClose={() => {if (!pending) void closeKeepingDraft();}}>
@@ -104,7 +110,7 @@ function StaffOrderEditor({onClose, userId}: {onClose: () => void; userId: strin
             <LabeledTextField {...field} inputRef={ref} label="Order notes" multiline fullWidth disabled={disabled}
               error={!!fieldState.error} helperText={fieldState.error?.message} />} />
           <OrderIssues error={mutation.error} names={names} />
-          {mutation.error && <Button disabled={disabled || items.isFetching} onClick={() => {void refreshPrices();}}>Refresh current prices</Button>}
+          <Button disabled={disabled || items.isFetching} onClick={() => {void refreshPrices();}}>Refresh current prices</Button>
           <Typography>The order starts as received. Confirm delivery and cash receipt separately after creating it.</Typography>
         </Stack></DialogContent>
         <DialogActions><Button disabled={pending || (!draft.ready && !draft.finished)} onClick={() => {void closeKeepingDraft();}}>Close and keep draft</Button>

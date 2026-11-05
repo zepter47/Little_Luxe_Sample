@@ -1,3 +1,4 @@
+import { formatUGX } from "../../items/item.pricing";
 import { Alert, Typography } from "@mui/material";
 import type { OrderDetail, OrderPerson, OrderRow } from "../order.types";
 import { orderPersonLabel } from "../order.model";
@@ -11,8 +12,9 @@ export default function OrderSummary({order, details, staff, people = []}: {orde
       {staff && <Typography>Added by: {orderPersonLabel(order.added_by, people, order.added_by ? "Staff details unavailable" : "Not recorded")}</Typography>}
     </>}
     {details.map(line => <Typography key={line.order_details_id}>
-      {line.item?.item_name || "Item unavailable"} × {line.quantity_sold} @ {line.sale_price}
+      {line.item?.item_name || "Item unavailable"} × {line.quantity_sold} @ {formatUGX(line.sale_price)}
+      {line.original_sale_price != null && (line.order_discount ?? 0) > 0 && <> (original {formatUGX(line.original_sale_price)}, {line.order_discount}% off)</>}
     </Typography>)}
-    <Typography>Total: {details.reduce((sum, line) => sum + (line.quantity_sold || 0) * (line.sale_price || 0), 0).toLocaleString()}</Typography>
+    <Typography>Total: {formatUGX(details.reduce((sum, line) => sum + (line.quantity_sold || 0) * (line.sale_price || 0), 0))}</Typography>
   </>;
 }

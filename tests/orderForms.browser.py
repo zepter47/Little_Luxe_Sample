@@ -87,6 +87,21 @@ with sync_playwright() as p:
     page.get_by_role('option',name='Walk In · 0700000000',exact=True).click()
     page.get_by_role('combobox',name='Item',exact=False).click()
     page.get_by_role('option',name='Floral Dress',exact=True).click()
+    discount=page.get_by_role('spinbutton',name='Discount (%)',exact=True)
+    sale=page.get_by_role('textbox',name='Sale price',exact=True)
+    assert sale.get_attribute('readonly') is not None
+    discount.fill('1.5')
+    page.get_by_role('button',name='Create order',exact=True).click()
+    expect(page.get_by_text('Discount must be a whole percentage.',exact=True)).to_be_visible()
+    assert not calls
+    discount.fill('100')
+    expect(sale).to_have_value('0')
+    discount.fill('50')
+    expect(sale).to_have_value('10')
+    page.get_by_role('button',name='Close and keep draft',exact=True).click()
+    page.get_by_role('button',name='New staff order',exact=True).click()
+    expect(page.get_by_role('spinbutton',name='Discount (%)',exact=True)).to_have_value('50')
+    expect(page.get_by_role('textbox',name='Sale price',exact=True)).to_have_value('10')
     quantity=page.get_by_role('spinbutton',name='Quantity',exact=False)
     quantity.fill('0')
     page.get_by_role('button',name='Create order',exact=True).click()
@@ -106,6 +121,7 @@ with sync_playwright() as p:
     expect(page.get_by_role('spinbutton',name='Quantity',exact=False)).to_have_value('2')
     expect(page.get_by_role('button',name='Remove',exact=True)).to_be_disabled()
     page.get_by_role('spinbutton',name='Quantity',exact=False).fill('1')
+    page.get_by_role('spinbutton',name='Discount (%)',exact=True).fill('50')
     page.get_by_role('textbox',name='Order notes',exact=True).fill('  Draft note  ')
     page.get_by_role('button',name='Create order',exact=True).click()
     page.get_by_role('button',name='No',exact=True).click()
@@ -123,16 +139,19 @@ with sync_playwright() as p:
     assert len(attempts)==2 and attempts[0]==attempts[1]
     assert attempts[0]['p_order_notes']=='Draft note'
     page.get_by_role('button',name='Refresh current prices',exact=True).click()
-    expect(page.get_by_role('textbox',name='Sale price',exact=True)).to_have_value('22')
+    expect(page.get_by_role('textbox',name='Sale price',exact=True)).to_have_value('11')
     expect(page.get_by_role('spinbutton',name='Quantity',exact=False)).to_have_value('1')
     page.get_by_role('spinbutton',name='Quantity',exact=False).fill('3')
     page.get_by_role('button',name='Create order',exact=True).click()
     page.get_by_role('button',name='Yes',exact=True).click()
     page.get_by_role('button',name='View order',exact=True).click()
-    expect(page.get_by_text('Total: 66',exact=True)).to_be_visible()
+    expect(page.get_by_text('Total: UGX 33',exact=True)).to_be_visible()
     attempts=[call[1] for call in calls if call[0]=='create_staff_order']
     assert len(attempts)==3 and attempts[2]['p_request_id']!=attempts[1]['p_request_id']
     assert attempts[2]['p_items_json'][0]['quantity']==3
+    assert attempts[2]['p_items_json'][0]['order_discount']==50
+    assert attempts[2]['p_items_json'][0]['original_sale_price']==22
+    assert attempts[2]['p_items_json'][0]['sale_price']==11
     # RHF validates the reason before the status mutation and retains it on failure.
     page.get_by_role('button',name='Decline order',exact=True).click()
     reason=page.get_by_role('textbox',name='Reason for decline',exact=False)

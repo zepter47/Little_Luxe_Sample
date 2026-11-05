@@ -1,6 +1,7 @@
 import { Box, Card, CardActionArea, CardContent, Chip, SvgIcon, Typography } from "@mui/material";
 import { createLink } from "@tanstack/react-router";
 import { useState } from "react";
+import ItemPrice from "./ItemPrice";
 import AddToCartButton from "../../cart/AddToCartButton";
 import { getCartImage } from "../../cart/image";
 import type { StorefrontItem } from "../item.types";
@@ -29,7 +30,7 @@ export default function ItemCard({item, category}: {item: StorefrontItem; catego
         </CardContent>
         </ItemCardLink>
         <Box sx={{display: "flex", alignItems: "center", justifyContent: "space-between", gap: 0.5, mt: "auto", px: {xs: 1.5, sm: 2}, pb: 1, pt: 0.5}}>
-            <Typography sx={{minWidth: 0, overflowWrap: "anywhere", fontSize: {xs: "0.9rem", sm: "1rem"}, fontWeight: 700, color: "#79543f"}}>{item.sale_price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</Typography>
+            <ItemPrice price={item.sale_price} discount={item.item_discount} />
             <Box sx={{flexShrink: 0, "& .MuiIconButton-root": {width: 44, height: 44, bgcolor: "#f5eee9", color: "#79543f", "&:hover": {bgcolor: "#eaddd3"}, "&.Mui-disabled": {color: "action.disabled"}}}}><AddToCartButton product={item} icon /></Box>
         </Box>
     </Card>;
