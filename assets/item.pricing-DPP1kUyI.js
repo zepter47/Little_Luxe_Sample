@@ -1,0 +1,1 @@
+function e(e,t=0){if(!Number.isSafeInteger(e)||e<0||!Number.isInteger(t)||t<0||t>100)throw Error(`Enter a whole-shilling price and a whole discount from 0 to 100.`);return Number((BigInt(e)*BigInt(100-t)+50n)/100n)}var t=e=>`UGX ${e.toLocaleString(`en-UG`,{maximumFractionDigits:0})}`;export{t as n,e as t};
