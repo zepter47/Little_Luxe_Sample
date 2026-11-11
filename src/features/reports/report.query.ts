@@ -10,5 +10,8 @@ export const salesReportQueryOptions = (userId: string, date: string, period: Re
             case 'monthly': return getMonthlySalesReport(date);
         }
     },
-    enabled: !!userId, refetchInterval: 60000,
+    enabled: !!userId,
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
 });
