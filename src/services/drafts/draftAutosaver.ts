@@ -1,3 +1,8 @@
+const activeSavers = new Set<{ flush(): Promise<void> }>();
+export async function flushDrafts(): Promise<void> {
+  await Promise.all([...activeSavers].map(saver => saver.flush()));
+}
+
 export class DraftAutosaver<T> {
   private latest: { value: T; revision: number } | undefined;
   private revision = 0;
@@ -17,6 +22,7 @@ export class DraftAutosaver<T> {
     delayMs = 500,
     maxWaitMs = 3000,
   ) {
+    activeSavers.add(this);
     this.write = write;
     this.reportError = reportError;
     this.delayMs = delayMs;
@@ -58,6 +64,7 @@ export class DraftAutosaver<T> {
   }
 
   stop(): Promise<void> {
+    activeSavers.delete(this);
     this.stopped = true;
     this.clearTimers();
     this.latest = undefined;

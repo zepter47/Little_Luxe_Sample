@@ -1,3 +1,4 @@
+import { PwaNavigation } from '../pwa/PwaControls'
 import { useState } from 'react'
 import { Link, Outlet, createRootRouteWithContext } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
@@ -85,6 +86,7 @@ function RootComponent() {
               </ListItem>
             ))}
           </List>
+          <PwaNavigation />
           {!auth.isAuthenticated && <Box sx={{mt: "auto", p: 3}}>
             <Button component={Link} to="/login" fullWidth variant="outlined" onClick={() => setMobileOpen(false)}>Sign in / Sign up</Button>
           </Box>}

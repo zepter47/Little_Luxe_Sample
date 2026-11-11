@@ -38,7 +38,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html 404.html assets favicon.svg icons.svg .nojekyll
+          git add index.html 404.html assets favicon.svg icons.svg .nojekyll sw.js workbox-*.js manifest.webmanifest pwa pwa-version.json
           if ! git diff --cached --quiet; then
             git commit -m 'Build GitHub Pages site'
             git push origin HEAD:feature-branch

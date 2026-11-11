@@ -1,3 +1,5 @@
+import PwaUpdates from './pwa/PwaControls'
+import { startPwa } from './pwa/state'
 import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -12,6 +14,8 @@ const queryClient = new QueryClient({defaultOptions: {
   }
 }});
 
+startPwa()
+
 // Render the app
 const rootElement = document.getElementById('root')!
 if (!rootElement.innerHTML) {
@@ -20,6 +24,7 @@ if (!rootElement.innerHTML) {
     <StrictMode>
       <QueryClientProvider client={queryClient}>
           <AppRouter />
+          <PwaUpdates />
       </QueryClientProvider>
     </StrictMode>,
   )
