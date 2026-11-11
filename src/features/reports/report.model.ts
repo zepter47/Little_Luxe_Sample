@@ -21,9 +21,10 @@ export function reportRange(date: string, period: ReportPeriod) {
 export function lineAmounts(line: ReportLine) {
     const revenue = line.quantity_sold * line.sale_price;
     const allocations = line.stock_reservation.filter(row => row.reservation_status === 'fulfilled');
+    const unitCost = (row: ReportLine['stock_reservation'][number]) => row.unit_cost_price ?? row.stock?.cost_price;
     const complete = allocations.reduce((sum, row) => sum + row.quantity_reserved, 0) === line.quantity_sold &&
-        allocations.every(row => row.stock !== null && Number.isFinite(row.stock.cost_price));
-    const cost = complete ? allocations.reduce((sum, row) => sum + row.quantity_reserved * row.stock!.cost_price, 0) : null;
+        allocations.every(row => Number.isFinite(unitCost(row)));
+    const cost = complete ? allocations.reduce((sum, row) => sum + row.quantity_reserved * unitCost(row)!, 0) : null;
     return {revenue, cost, profit: cost === null ? null : revenue - cost};
 }
 export function saleAmounts(sale: ReportSale) {

@@ -663,6 +663,7 @@ export type Database = {
       }
       stock_reservation: {
         Row: {
+          unit_cost_price: number | null
           created_at: string
           order_details_id: string
           quantity_reserved: number
@@ -671,6 +672,7 @@ export type Database = {
           stock_id: string
         }
         Insert: {
+          unit_cost_price?: number | null
           created_at?: string
           order_details_id: string
           quantity_reserved: number
@@ -679,6 +681,7 @@ export type Database = {
           stock_id: string
         }
         Update: {
+          unit_cost_price?: number | null
           created_at?: string
           order_details_id?: string
           quantity_reserved?: number

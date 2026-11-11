@@ -11,7 +11,7 @@ export default function Reports({userId}: {userId: string}) {
     const [period, setPeriod] = useState<ReportPeriod>('daily');
     const [date, setDate] = useState(() => reportDate(new Date()));
     const range = reportRange(date, period);
-    const query = useQuery(salesReportQueryOptions(userId, range.start, range.end));
+    const query = useQuery(salesReportQueryOptions(userId, date, period));
     const sales = query.data ?? [];
     const total = reportTotals(sales);
     const days = [...new Set(sales.map(sale => reportDate(new Date(sale.delivered_on))))].sort();
@@ -33,7 +33,7 @@ export default function Reports({userId}: {userId: string}) {
                 }} />
                 <Button onClick={() => {void query.refetch();}} disabled={query.isFetching} sx={{ml: {sm: 'auto'}}}>Refresh report</Button>
             </Box>
-            <Typography variant="body2" color="text.secondary" sx={{mt: 2}}>{rangeLabel} · Africa/Kampala · Weeks run Monday–Sunday</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{mt: 2}}>{rangeLabel} · Weeks run Monday–Sunday</Typography>
         </Paper>
         {query.isFetching && <LinearProgress aria-label="Loading sales report" />}
         {query.isError ? <Alert severity="error" action={<Button onClick={() => {void query.refetch();}}>Retry</Button>}>Unable to load a complete sales report. Please try again.</Alert> : query.isPending ? <Typography role="status">Preparing your sales report…</Typography> : <>
@@ -41,7 +41,7 @@ export default function Reports({userId}: {userId: string}) {
                 <Paper key={label} sx={{...styles.metric, ...(label === 'Gross profit' ? {bgcolor: '#edf5ef', borderColor: '#cee2d3'} : {})}}>
                     <Typography variant="body2" color="text.secondary">{label}</Typography><Typography sx={{fontSize: {xs: 24, md: 28}, fontWeight: 700, mt: 1, letterSpacing: '-.03em'}}>{value}</Typography>
                 </Paper>)}</Box>
-            <Typography variant="body2" color="text.secondary">Delivered sales only, grouped by delivery date. Selling prices include recorded discounts. Gross profit excludes expenses and returns. Costs use the fulfilled stock batches’ recorded cost prices.</Typography>
+            <Typography variant="body2" color="text.secondary">Delivered sales only, grouped by delivery date. Selling prices include recorded discounts. Gross profit excludes expenses and returns. Costs use the recorded cost snapshots for fulfilled sales.</Typography>
             {!!total.missing && <Alert severity="warning">Cost is unavailable for {total.missing} sale(s). Period cost and profit are unavailable until all stock allocations and costs can be read.</Alert>}
             {!sales.length ? <Paper sx={{...styles.panel, textAlign: 'center', py: 6}}><Typography variant="h6">No completed sales in this period</Typography><Typography color="text.secondary" sx={{mt: 1}}>Choose another date or reporting period to explore your sales.</Typography></Paper> : <>
                 <Paper sx={styles.panel}>

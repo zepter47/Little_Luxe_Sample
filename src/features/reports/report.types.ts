@@ -4,7 +4,7 @@ export interface ReportLine {
     quantity_sold: number;
     sale_price: number;
     item: {item_name: string} | null;
-    stock_reservation: {quantity_reserved: number; reservation_status: string; stock: {cost_price: number} | null}[];
+    stock_reservation: {unit_cost_price?: number | null; quantity_reserved: number; reservation_status: string; stock: {cost_price: number} | null}[];
 }
 export interface ReportSale {
     order_id: string;

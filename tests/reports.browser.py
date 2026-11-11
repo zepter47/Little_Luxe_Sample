@@ -39,7 +39,7 @@ with sync_playwright() as p:
                     return
                 result = [] if mode[0] == 'empty' else [dict(order_id='sale-12345678', changed_on='2026-11-11T09:00:00Z')]
             elif 'order_details' in url:
-                result = [dict(order_details_id='line', quantity_sold=2, sale_price=10000, item={'item_name': 'Linen dress'}, stock_reservation=[] if mode[0] == 'missing' else [dict(quantity_reserved=2, reservation_status='fulfilled', stock={'cost_price': 6000})])]
+                result = [dict(order_details_id='line', quantity_sold=2, sale_price=10000, item={'item_name': 'Linen dress'}, stock_reservation=[] if mode[0] == 'missing' else [dict(quantity_reserved=2, reservation_status='fulfilled', unit_cost_price=6000, stock=None)])]
             elif '/order?' in url:
                 result = dict(order_id='sale-12345678', order_origin='staff')
             else:
@@ -48,6 +48,7 @@ with sync_playwright() as p:
         page.route(HOST+'/**', api)
         page.goto('http://localhost:5173/reports')
         expect(page.get_by_role('heading', name='Sales reports', exact=True)).to_be_visible()
+        expect(page.get_by_text('Africa/Kampala', exact=False)).to_have_count(0)
         expect(page.get_by_text('UGX 8,000', exact=True).first).to_be_visible()
         page.get_by_role('button', name='Sale SALE-123').click()
         expect(page.get_by_text('UGX 6,000', exact=True)).to_be_visible()

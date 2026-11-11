@@ -1,6 +1,14 @@
 import { queryOptions } from '@tanstack/react-query';
-import { getSalesReport } from './report.api';
-export const salesReportQueryOptions = (userId: string, start: string, end: string) => queryOptions({
-    queryKey: ['reports', 'sales', userId, start, end],
-    queryFn: () => getSalesReport(start, end), enabled: !!userId, refetchInterval: 60000,
+import { getDailySalesReport, getWeeklySalesReport, getMonthlySalesReport } from './report.api';
+import type { ReportPeriod } from './report.types';
+export const salesReportQueryOptions = (userId: string, date: string, period: ReportPeriod) => queryOptions({
+    queryKey: ['reports', 'sales', userId, period, date],
+    queryFn: () => {
+        switch (period) {
+            case 'daily': return getDailySalesReport(date);
+            case 'weekly': return getWeeklySalesReport(date);
+            case 'monthly': return getMonthlySalesReport(date);
+        }
+    },
+    enabled: !!userId, refetchInterval: 60000,
 });

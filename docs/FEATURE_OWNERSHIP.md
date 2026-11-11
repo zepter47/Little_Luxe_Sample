@@ -133,12 +133,16 @@ all client writes remain blocked. Query keys include the viewer and exclusive da
 Daily, Monday–Sunday weekly, and calendar-month reports use Africa/Kampala
 delivery dates from order status history. Only delivered orders count. Recorded
 unit selling prices already include discounts. Cost is the sum of fulfilled
-stock allocations multiplied by their batch cost prices; weighted unit costs
+stock allocations multiplied by their saved unit cost snapshots; weighted unit costs
 are displayed in the sale breakdown. A missing or unreadable allocation/cost
 makes that sale's cost/profit and the period cost/profit unavailable. Revenue
 remains visible. Zero-cost allocations and losses are valid. Gross profit
-excludes returns and operating expenses. Costs refer to linked stock records,
-not an immutable sale-time snapshot; later batch-cost edits affect reports.
+excludes returns and operating expenses. The `report_sale_cost_snapshots` migration preserves allocation costs before
+depleted stock is deleted. Existing linked batches are backfilled; deleted
+batches are recovered only when matching earlier purchase records agree on
+cost. Conflicting or absent purchase history stays explicitly unknown.
+Daily, weekly, and monthly APIs each own their reporting-period boundary and
+share only the low-level delivery/line reads.
 
 `tests/reports.test.mjs` covers Uganda date boundaries, leap months, multi-batch
 costs, losses, and missing allocations. `tests/reports.browser.py` uses mocked
