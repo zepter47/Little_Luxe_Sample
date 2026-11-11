@@ -20,6 +20,7 @@ and React Query as libraries does not create a shared application component.
 | Customers | `customers/Customers.tsx` | `customer.api.ts`, `customer.query.ts`, `customer.schema.ts`, `customer.types.ts` |
 | Purchases | `purchases/Purchases.tsx` | `purchase.api.ts`, `purchase.query.ts`, `purchase.schema.ts`, `purchase.types.ts` |
 | Orders | `orders/OrderDashboard.tsx` | `order.api.ts`, `order.query.ts`, `order.schema.ts`, `order.types.ts`, `order.model.ts`, `order.errors.ts` |
+| Reports | `reports/Reports.tsx` | `report.api.ts`, `report.query.ts`, `report.types.ts`, `report.model.ts` |
 | Returns | `returns/Returns.tsx` | UI placeholder only; no data access or workflow |
 
 All paths in the table are relative to `src/features`. Feature components live
@@ -117,3 +118,24 @@ checks, and first/last-name or email rendering without person UUIDs.
 
 `npm run test:orders` runs the existing local PGlite database workflow suite.
 
+
+## Sales reports
+
+`/reports` is a staff/admin-only route, linked in the main navigation. The route
+owns authorization; `features/reports` owns all report queries, calculations,
+styles, and responsive presentation. Reads retain existing RLS and require no
+schema changes. Query keys include the viewer and exclusive date bounds.
+
+Daily, Monday–Sunday weekly, and calendar-month reports use Africa/Kampala
+delivery dates from order status history. Only delivered orders count. Recorded
+unit selling prices already include discounts. Cost is the sum of fulfilled
+stock allocations multiplied by their batch cost prices; weighted unit costs
+are displayed in the sale breakdown. A missing or unreadable allocation/cost
+makes that sale's cost/profit and the period cost/profit unavailable. Revenue
+remains visible. Zero-cost allocations and losses are valid. Gross profit
+excludes returns and operating expenses. Costs refer to linked stock records,
+not an immutable sale-time snapshot; later batch-cost edits affect reports.
+
+`tests/reports.test.mjs` covers Uganda date boundaries, leap months, multi-batch
+costs, losses, and missing allocations. `tests/reports.browser.py` uses mocked
+Supabase responses against Vite to check mobile/desktop views and route guards.

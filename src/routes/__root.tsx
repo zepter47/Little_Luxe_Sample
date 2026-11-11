@@ -15,6 +15,7 @@ const navigationItems = [
   { label: 'Admin', to: '/admin', path: 'M12 3 3 7v5c0 5 9 9 9 9s9-4 9-9V7ZM8 12l3 3 5-6' },
   { label: 'Stock Management', to: '/stock-management', path: 'M3 7h18v14H3ZM2 3h20v4H2Zm7 8h6m-3-4v14' },
   { label: 'Dashboard', to: '/dashboard', path: 'M3 3h7v7H3Zm11 0h7v7h-7ZM3 14h7v7H3Zm11 0h7v7h-7Z' },
+  { label: 'Reports', to: '/reports', path: 'M4 3h16v18H4ZM8 16v-3m4 3V8m4 8v-5' },
   { label: 'Cart', to: '/cart', path: 'M3 3h2l3 12h10l3-9H6M9 20h.01M18 20h.01' },
   { label: 'About', to: '/about', path: 'M12 8h.01M12 11v6m9-5a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z' },
 ] as const
@@ -67,7 +68,7 @@ function RootComponent() {
           </Box>}
           <Typography component="h2" sx={styles.sectionLabel}>Navigation</Typography>
           <List disablePadding sx={styles.list}>
-            {navigationItems.filter(item => (item.to !== "/admin" && item.to !== "/stock-management") || canManageStore(auth)).map((item) => (
+            {navigationItems.filter(item => (item.to !== "/admin" && item.to !== "/stock-management" && item.to !== "/reports") || canManageStore(auth)).map((item) => (
               <ListItem key={item.to} disablePadding>
                 <ListItemButton
                   component={Link}
