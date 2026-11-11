@@ -123,8 +123,12 @@ checks, and first/last-name or email rendering without person UUIDs.
 
 `/reports` is a staff/admin-only route, linked in the main navigation. The route
 owns authorization; `features/reports` owns all report queries, calculations,
-styles, and responsive presentation. Reads retain existing RLS and require no
-schema changes. Query keys include the viewer and exclusive date bounds.
+styles, and responsive presentation. Reads retain RLS. The
+`sales_report_allocation_read` migration grants only the allocation columns
+needed by the report, with a SELECT policy restricted to non-anonymous
+staff/admins who have both orders.read and stock.read. Only fulfilled
+allocations belonging to delivered sales are visible; other allocations and
+all client writes remain blocked. Query keys include the viewer and exclusive date bounds.
 
 Daily, Monday–Sunday weekly, and calendar-month reports use Africa/Kampala
 delivery dates from order status history. Only delivered orders count. Recorded
@@ -139,3 +143,7 @@ not an immutable sale-time snapshot; later batch-cost edits affect reports.
 `tests/reports.test.mjs` covers Uganda date boundaries, leap months, multi-batch
 costs, losses, and missing allocations. `tests/reports.browser.py` uses mocked
 Supabase responses against Vite to check mobile/desktop views and route guards.
+
+`tests/reportPermissions.test.mjs` exercises the actual migration in Postgres
+(PGlite), including allowed staff/admin reads, denied customer and anonymous
+reads, missing permissions, hidden operational allocations, and denied writes.
